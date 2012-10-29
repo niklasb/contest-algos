@@ -183,7 +183,8 @@ int get_part_of_fac_n_mod_pe(int n, int p, int mod, int *upto, int &cnt) {
   }
 }
 
-// C(n,k) % p^e where mod == p^e. Slower than Andrew Granville.
+// C(n,k) % p^e where mod == p^e. Sometimes Granville is faster, sometimes
+// this one
 int binomod2(int n, int k, int p, int mod) {
   static int upto[maxm + 1];
   upto[0] = 1 % mod;
@@ -199,28 +200,33 @@ int binomod2(int n, int k, int p, int mod) {
 }
 
 int binomod_gen(int n, int k, int m) {
-  static llong partp[crt_maxlen], partmod[crt_maxlen];
+  static llong partp[crt_maxlen], partq[crt_maxlen], partmod[crt_maxlen];
   int partn = 0, tm = m;
   for (int i = 2; i * i <= tm; ++i)
     if (tm % i == 0) {
-      partmod[partn] = 1;
+      partq[partn] = 0;
       partp[partn] = i;
+      partmod[partn] = 1;
       while (tm % i == 0) {
         tm /= i;
+        partq[partn] += 1;
         partmod[partn] *= i;
       }
       ++partn;
     }
   if (tm > 1) {
-    partmod[partn] = tm;
+    partq[partn] = 1;
     partp[partn] = tm;
+    partmod[partn] = tm;
     ++partn;
   }
 
   llong coef[partn], res[partn];
   for (int i = 0; i < partn; ++i) {
     coef[i] = 1;
+    // choose whichever is faster ;)
     res[i] = binomod2(n, k, partp[i], partmod[i]);
+    //res[i] = binomod(n, k, partp[i], partq[i]);
   }
   llong sol, mod;
   crt_gen(partn, coef, res, partmod, sol, mod);

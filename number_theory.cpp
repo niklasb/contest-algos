@@ -48,6 +48,7 @@ llong powmod(llong base, llong exp, llong m) {
   return result;
 }
 
+// only works correctly for non-negative a!
 llong modinv(llong a, llong m) {
   llong lastx, lasty;
   extended_gcd(a, m, lastx, lasty);

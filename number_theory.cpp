@@ -61,6 +61,50 @@ llong modinv_prime(llong a, llong p) {
   return powmod(a, p-2, p);
 }
 
+const int pmax = 1000000;
+static map<int, int> pfacs[pmax+1];
+void precompute_primefacs(llong to) {
+  for (llong i = 2; i <= to; i++) {
+    if (!pfacs[i].empty()) continue;
+    pfacs[i][i]++;
+    for (llong j = i+i; j <= to; j += i) {
+      llong x = j;
+      while (x % i == 0) {
+        pfacs[j][i]++;
+        x /= i;
+      }
+    }
+  }
+}
+
+static bool sieve[pmax+1];
+void precompute_primes(llong to) {
+  sieve[0] = sieve[1] = true;
+  for (llong i = 2; i <= to; i++) {
+    if (sieve[i]) continue;
+    for (llong j = i*i; j <= to; j += i)
+      sieve[j] = true;
+  }
+}
+
+bool is_prime(llong x) {
+  for (llong i = 2; i*i <= x; ++i)
+    if (x % i == 0) return false;
+  return true;
+}
+
+bool compute_pfacs(llong x, map<int, int>& pfacs) {
+  for (llong i = 2; i*i <= x; ++i) {
+    while (x % i == 0) {
+      pfacs[i]++;
+      x /= i;
+    }
+  }
+  if (x > 1)
+    pfacs[x]++;
+  return pfacs.empty();
+}
+
 // solve x = b[i] (mod m[i])  0 <= i < n. m[i] must be comprime!
 // result will be mod p_0 * ... * p_{n-1}
 llong crt_coprime(llong as[], llong ps[], int len, llong& mod) {

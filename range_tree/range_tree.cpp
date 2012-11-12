@@ -1,5 +1,6 @@
 #include <vector>
 #include <algorithm>
+#include <iostream>
 using namespace std;
 
 typedef int X; typedef int Y;
@@ -89,9 +90,8 @@ private:
   vector<Subtree> subtrees;
 };
 
-#include <iostream>
-struct callback2 {
-  callback2(RangeTree2D& t) : tree(t) { }
+struct callback {
+  callback(RangeTree2D& t) : tree(t) { }
   void operator()(const Point& p) {
     cout << p.x << " " << p.y << endl;
   }
@@ -100,20 +100,14 @@ struct callback2 {
 
 int main() {
   vector<Point> test;
-  test.push_back(Point(1, 1));
-  test.push_back(Point(2, 2));
-  test.push_back(Point(3, 3));
-  test.push_back(Point(4, 4));
-  test.push_back(Point(5, 5));
-  test.push_back(Point(6, 6));
-  test.push_back(Point(7, 7));
-  test.push_back(Point(8, 8));
+  test.push_back(Point(1, 8));
+  test.push_back(Point(2, 7));
+  test.push_back(Point(3, 6));
+  test.push_back(Point(4, 5));
+  test.push_back(Point(5, 4));
+  test.push_back(Point(6, 3));
+  test.push_back(Point(7, 2));
+  test.push_back(Point(8, 1));
   RangeTree2D t(test);
-  /*
-  for (int i = 0; i < 20; i++) {
-    cout << i << " " << t.xs[i] << endl;
-  }
-  cout<<"========="<<endl;
-  */
-  t.query(1, 6, 3, 100, callback2(t));
+  t.query(1, 6, 5, 100, callback(t));
 }

@@ -1,9 +1,19 @@
+#include <map>
+#include <cstring>
+using namespace std;
+
 typedef long long llong;
 
 const int crt_maxlen = 500;
 const int maxm = 100010;
 // maximum number of digits of n in base p
 const int binomod_maxdigs = 100;
+
+llong gcd(llong a, llong b) {
+  llong t;
+  while (b) t = b, b = a % b, a = t;
+  return a;
+}
 
 llong extended_gcd(llong a, llong b, llong& lastx, llong& lasty) {
   llong x, y, q, tmp;
@@ -93,7 +103,7 @@ bool is_prime(llong x) {
   return true;
 }
 
-bool compute_pfacs(llong x, map<int, int>& pfacs) {
+bool compute_pfacs_with_exp(llong x, map<int, int>& pfacs) {
   for (llong i = 2; i*i <= x; ++i) {
     while (x % i == 0) {
       pfacs[i]++;
@@ -103,6 +113,35 @@ bool compute_pfacs(llong x, map<int, int>& pfacs) {
   if (x > 1)
     pfacs[x]++;
   return pfacs.empty();
+}
+
+int compute_pfacs(llong x, int pfacs[]) {
+  int len = 0;
+  for (llong i = 2; i*i <= x; ++i) {
+    if (x % i == 0) {
+      pfacs[len++] = i;
+      do { x /= i; } while (x % i == 0);
+    }
+  }
+  if (x > 1)
+    pfacs[len++] = x;
+  return len;
+}
+
+// use inclusion-exclusion to get the number of integers <= n
+// that are not divisable by any of the given primes.
+// This essentially enumerates all the subsequences and adds or subtracts
+// their product, depending on the current parity value.
+llong count_coprime_rec(int primes[], int len, llong n, int i, llong prod, bool parity) {
+  if (i >= len || prod * primes[i] > n) return 0;
+  return (parity ? 1 : (-1)) * (n / (prod*primes[i]))
+        + count_coprime_rec(primes, len, n, i + 1, prod, parity)
+        + count_coprime_rec(primes, len, n, i + 1, prod * primes[i], !parity);
+}
+// use cnt(B) - cnt(A-1) to get matching integers in range [A..B]
+llong count_coprime(int primes[], int len, llong n) {
+  if (n <= 1) return max(0LL, n);
+  return n - count_coprime_rec(primes, len, n, 0, 1, true);
 }
 
 // solve x = b[i] (mod m[i])  0 <= i < n. m[i] must be comprime!

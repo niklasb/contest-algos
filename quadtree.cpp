@@ -50,7 +50,6 @@ struct Quadtree {
   }
 
   void update(int x, int y, int diff) {
-    Point* res = 0;
     sum += diff;
     if (leaf) {
       bool found = false;

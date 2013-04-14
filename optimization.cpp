@@ -1,8 +1,8 @@
 const double eps = 1e-10;
 
 // assume a unimodal or monotonous function
-template <typename T>
-double ternary_search(T lt, double l, double r) {
+template <typename T, typename F>
+double ternary_search(T lt, F f, double l, double r) {
   double yl = f(l);
   double yr = f(r);
   double ym = f((l+r)/2);
@@ -24,10 +24,12 @@ double ternary_search(T lt, double l, double r) {
   return f((l+r)/2);
 }
 
-double ternary_search_max(double l, double r) {
+template <typename F>
+double ternary_search_max(F f, double l, double r) {
   return ternary_search(less, l, r);
 }
 
-double ternary_search_min(double l, double r) {
+template <typename F>
+double ternary_search_min(F f, double l, double r) {
   return ternary_search(greater, l, r);
 }

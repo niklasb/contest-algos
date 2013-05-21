@@ -39,6 +39,7 @@ void callback(Point& p) {
 }
 
 // input must be sorted by the X coordinate
+// X values must be distinct!
 void build(Point input[], int start, int end, int pos) {
   int m = (end + start - 1)/2;
   xs[pos] = input[m].x;

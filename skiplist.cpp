@@ -35,7 +35,7 @@ void init() {
 int pos[maxh+1];
 Node* pred[maxh];
 
-Node* find(T val) {
+Node* find(T val) { // find a value and update predecessor info
 	Node* n = head;
 	pos[maxh] = 0;
 	for (int lvl = maxh-1; lvl >= 0; --lvl) {
@@ -49,7 +49,7 @@ Node* find(T val) {
 	return (n && n->val == val) ? n : 0;
 }
 
-Node* insert(T val) {
+Node* insert(T val) { // insert val and return inserted node
 	find(val);
 	Node* n = new Node(val);
 	int lvl = 0;
@@ -66,7 +66,7 @@ Node* insert(T val) {
 	return n;
 }
 
-void remove(T val) {
+void remove(T val) { // remove val if existing
 	Node* rem = find(val);
 	if (!rem) return;
 	for (int lvl = 0; lvl < maxh; ++lvl) {
@@ -77,12 +77,12 @@ void remove(T val) {
 	}
 }
 
-int lessthan(T val) {
+int lessthan(T val) { // return # of elements < val
 	find(val);
 	return pos[0];
 }
 
-Node* kth(int k) {
+Node* kth(int k) { // return k-th element (1 <= k < = n)
 	Node* n = head;
 	for (int lvl = maxh-1; lvl >= 0; --lvl) {
 		while (n->dst[lvl] <= k) {

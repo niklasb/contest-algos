@@ -26,10 +26,10 @@ double ternary_search(T lt, F f, double l, double r) {
 
 template <typename F>
 double ternary_search_max(F f, double l, double r) {
-  return ternary_search(less, l, r);
+  return ternary_search(less<double>, f, l, r);
 }
 
 template <typename F>
 double ternary_search_min(F f, double l, double r) {
-  return ternary_search(greater, l, r);
+  return ternary_search(greater<double>, f, l, r);
 }

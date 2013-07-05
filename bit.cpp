@@ -7,18 +7,14 @@ static int tree[n+1];
 // 1 <= idx <= n
 int read(int idx){
   int sum = 0;
-  while (idx > 0){
+  for (; idx > 0; idx -= idx&-idx)
     sum += tree[idx];
-    idx -= (idx & -idx);
-  }
   return sum;
 }
 
 void update(int idx, int val){
-  while (idx <= n) {
+  for (; idx <= n; idx += idx&-idx)
     tree[idx] += val;
-    idx += (idx & -idx);
-  }
 }
 
 int main() {

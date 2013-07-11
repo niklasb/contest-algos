@@ -150,7 +150,7 @@ G convex_cut(const G& g, const L& l) {
   return Q;
 }
 G voronoi_cell(G g, const vector<P> &v, int s) {
-  REP(i, v.size())
+  rep(i,0,v.size())
     if (i!=s)
       g = convex_cut(g, bisector(v[s], v[i]));
   return g;

@@ -7,6 +7,7 @@
 #include <queue>
 #include <deque>
 #include <map>
+#include <valarray>
 #include <tr1/unordered_map>
 #include <tr1/unordered_set>
 #include <algorithm>
@@ -52,9 +53,6 @@ namespace std {
     return real(a)!=real(b) ? real(a)<real(b) : imag(a)<imag(b);
   }
 }
-ostream& operator<<(ostream& out, P p) {
-  return out << real(p) << "/" << imag(p);
-}
 
 D cross(P a, P b)    { return imag(conj(a) * b); }
 D dot(P a, P b)      { return real(conj(a) * b); }
@@ -72,14 +70,19 @@ int ccw(P a, P b, P c) {
 }
 
 typedef vector<P> L;
+typedef vector<P> G;
+G dummy;
 L line(P a, P b) {
   L res; res.pb(a); res.pb(b); return res;
 }
 P dir(const L& l) { return l[1]-l[0]; }
 
-bool intersectLL(const L& l, const L& m) {
-  return abs(cross(dir(l), dir(m))) > eps || // non-parallel
-         abs(cross(l[1]-l[0], m[0]-l[0])) < eps;   // same line
+D project(P e, P x) { return dot(e,x) / norm(e); }
+P pedal(const L& l, P p) { return l[1] + dir(l) * project(dir(l), p-l[1]); }
+int intersectLL(const L &l, const L &m) {
+  if (abs(cross(l[1]-l[0], m[1]-m[0])) > eps) return 1;  // non-parallel
+  if (abs(cross(l[1]-l[0], m[0]-l[0])) < eps) return -1; // same line
+  return 0;
 }
 bool intersectLS(const L& l, const L& s) {
   return cross(dir(l), s[0]-l[0])*       // s[0] is left of l
@@ -89,31 +92,27 @@ bool intersectLP(const L& l, const P& p) {
   return abs(cross(l[1]-p, l[0]-p)) < eps;
 }
 bool intersectSS(const L& s, const L& t) {
-  return ccw(s[0],s[1],t[0]) * ccw(s[0],s[1],t[1]) <= 0 &&
-         ccw(t[0],t[1],s[0]) * ccw(t[0],t[1],s[1]) <= 0;
+  return sgn(ccw(s[0],s[1],t[0]) * ccw(s[0],s[1],t[1])) <= 0 &&
+         sgn(ccw(t[0],t[1],s[0]) * ccw(t[0],t[1],s[1])) <= 0;
 }
 bool intersectSP(const L& s, const P& p) {
   return abs(s[0]-p)+abs(s[1]-p)-abs(s[1]-s[0]) < eps; // triangle inequality
 }
-P projection(const L& l, const P& p) {
-  D t = dot(p-l[1], dir(l)) / norm(dir(l));
-  return l[1] + t*dir(l);
+P reflection(const L& l, P p) {
+  return p + P(2,0) * (pedal(l, p) - p);
 }
-P reflection(const L& l, const P& p) {
-  return p + P(2,0) * (projection(l, p) - p);
-}
-D distanceLP(const L& l, const P& p) {
-  return abs(p - projection(l, p));
+D distanceLP(const L& l, P p) {
+  return abs(p - pedal(l, p));
 }
 D distanceLL(const L& l, const L& m) {
   return intersectLL(l, m) ? 0 : distanceLP(l, m[0]);
 }
-D istanceLS(const L& l, const L& s) {
+D distanceLS(const L& l, const L& s) {
   if (intersectLS(l, s)) return 0;
   return min(distanceLP(l, s[0]), distanceLP(l, s[1]));
 }
-D distanceSP(const L& s, const P& p) {
-  const P r = projection(s, p);
+D distanceSP(const L& s, P p) {
+  P r = pedal(s, p);
   if (intersectSP(s, r)) return abs(r - p);
   return min(abs(s[0] - p), abs(s[1] - p));
 }
@@ -122,20 +121,16 @@ D distanceSS(const L& s, const L& t) {
   return min(min(distanceSP(s, t[0]), distanceSP(s, t[1])),
              min(distanceSP(t, s[0]), distanceSP(t, s[1])));
 }
-P crosspoint(const L &l, const L &m) {
+P crosspoint(const L& l, const L& m) { // return intersection point
   D A = cross(dir(l), dir(m));
   D B = cross(dir(l), l[1] - m[0]);
-  if (abs(A) < eps && abs(B) < eps) return m[0]; // same line
-  if (abs(A) < eps) assert(0); // !!!PRECONDITION NOT SATISFIED!!!
   return m[0] + B / A * dir(m);
 }
 L bisector(P a, P b) {
   P A = (a+b)*P(0.5,0);
-  return line(A, A+(b-a)*P(0, pi/2));
+  return line(A, A+(b-a)*P(0,1));
 }
 
-// polygons / sets of points
-typedef vector<P> G;
 #define next(g,i) g[(i+1)%g.size()]
 D area(const G& g) {
   D A = 0;
@@ -153,12 +148,12 @@ G convex_cut(const G& g, const L& l) {
   }
   return Q;
 }
-bool convex_contain(const G &g, const P &p) {
+bool convex_contain(const G& g, P p) {
   rep(i,0,g.size())
     if (ccw(g[i], next(g, i), p) == -1) return 0;
   return 1;
 }
-bool intersectGG(const G &g1, const G &g2) {
+bool intersectGG(const G& g1, const G& g2) {
   if (convex_contain(g1, g2[0])) return 1;
   if (convex_contain(g2, g1[0])) return 1;
   rep(i,0,g1.size()) rep(j,0,g2.size()) {
@@ -166,7 +161,7 @@ bool intersectGG(const G &g1, const G &g2) {
   }
   return 0;
 }
-D distanceGP(const G &g, const P &p) {
+D distanceGP(const G& g, P p) {
   if (convex_contain(g, p)) return 0;
   D res = inf;
   rep(i,0,g.size()) {
@@ -204,7 +199,7 @@ G intersectCL2(const C& c, D dst, P v) {
   return res;
 }
 G intersectCL(const C& c, const L& l) {
-  P v = projection(l, c.p) - c.p;
+  P v = pedal(l, c.p) - c.p;
   return intersectCL2(c, abs(v), v);
 }
 G intersectCS(const C& c, const L& s) {
@@ -213,7 +208,7 @@ G intersectCS(const C& c, const L& s) {
     if (intersectSP(s, *it)) res.pb(*it);
   return res;
 }
-int intersectCC(const C& a, const C& b, G& res) {
+int intersectCC(const C& a, const C& b, G& res=dummy) {
   D sum = a.r + b.r, diff = abs(a.r - b.r), dst = abs(a.p - b.p);
   if (dst > sum + eps || dst < diff - eps) return 0;
   if (max(dst, diff) < eps) { // same circle
@@ -224,6 +219,30 @@ int intersectCC(const C& a, const C& b, G& res) {
   P ab = b.p - a.p;
   res = intersectCL2(a, p, ab);
   return res.size();
+}
+typedef valarray<D> P3;
+P3 p3(D x=0, D y=0, D z=0) {
+  P3 res(3);
+  res[0]=x;res[1]=y;res[2]=z;
+  return res;
+}
+ostream& operator<<(ostream& out, const P3& x) {
+  return out << "(" << x[0]<<","<<x[1]<<","<<x[2]<<")";
+}
+P3 cross(const P3& a, const P3& b) {
+  P3 res;
+  rep(i,0,3) res[i]=a[(i+1)%3]*b[(i+2)%3]-a[(i+2)%3]*b[(i+1)%3];
+  return res;
+}
+D dot(const P3& a, const P3& b) {
+  return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+}
+D norm(const P3& x) { return dot(x,x); }
+D abs(const P3& x) { return sqrt(norm(x)); }
+D project(const P3& e, const P3& x) { return dot(e,x) / norm(e); }
+P project_plane(const P3& v, P3 w, const P3& p) {
+  w -= project(v,w)*v;
+  return P(dot(p,v)/abs(v), dot(p,w)/abs(w));
 }
 template <typename T, int N> struct Matrix {
   T data[N][N];

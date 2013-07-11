@@ -138,6 +138,7 @@ D area(const G& g) {
     A += cross(g[i], next(g,i));
   return abs(A/2);
 }
+// intersect with half-plane left of l[0] -> l[1]
 G convex_cut(const G& g, const L& l) {
   G Q;
   rep(i,0,g.size()) {

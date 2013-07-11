@@ -149,6 +149,12 @@ G convex_cut(const G& g, const L& l) {
   }
   return Q;
 }
+G voronoi_cell(G g, const vector<P> &v, int s) {
+  REP(i, v.size())
+    if (i!=s)
+      g = convex_cut(g, bisector(v[s], v[i]));
+  return g;
+}
 bool convex_contain(const G& g, P p) {
   rep(i,0,g.size())
     if (ccw(g[i], next(g, i), p) == -1) return 0;

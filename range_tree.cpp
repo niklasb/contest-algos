@@ -1,73 +1,88 @@
-#include <vector>
-#include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <set>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <map>
+#include <algorithm>
+#include <iomanip>
+#include <complex>
+#include <valarray>
+#include <tr1/unordered_map>
+#include <tr1/unordered_set>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <climits>
+
 using namespace std;
+using namespace std::tr1;
 
-#define INF 2000000000L
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+#define foreach(v,c) for(typeof((c).begin()) v=(c).begin(); v!=(c).end();++v)
+#define rep(i,s,e) for (int i=(s);i<(e);++i)
+#define pb push_back
+#define mk make_pair
+#define fst first
+#define snd second
+#define all(x) (x).begin(),(x).end()
+#define clr(x,y) memset(x,y,sizeof x)
+#define contains(x,y) (x).find(y)!=(x).end()
+#define endl "\n"
 
-typedef int X; typedef int Y;
-struct Point {
-  X x; Y y;
-  Point() :x(0),y(0){};
-  Point(X _x, Y _y) :x(_x),y(_y){};
-};
+int dx[]={0,0,1,-1,1,-1,1,-1}, dy[]={-1,1,0,0,1,-1,-1,1};
+const int mod = 1e9+7,maxn=100100;
 
-bool cmpY(const Point& a, const Point& b) { return a.y < b.y; }
-bool cmpX(const Point& a, const Point& b) { return a.x < b.x; }
+typedef int XX;
+typedef int YY;
+typedef pair<XX,YY> Point;
+typedef pair<XX, vector<Point> > Node;
+const XX inf = 1<<30;
 
-struct Subtree {
-  vector<Point> points;
-  // augmentation hooks
-  void update(Subtree& left, Subtree& right) { }
-  void update_leaf(Point& p) { }
-};
+int N;
+Node tree[maxn];
 
-const int maxn = 100000;
-const int size = maxn*4 + 10;
+int left(int i) { return (i<<1) + 1; }
+int right(int i) { return (i<<1) + 2; }
+int parent(int i) { return (i-1)>>1; }
+bool leaf(int i) { return i >= N-1; }
+bool cmpY(const Point& a, const Point& b) { return a.snd < b.snd; }
 
-X xs[size];
-bool leaf[size];
-Subtree subtrees[size];
-Point input[maxn];
-
-int left(int i) { return i * 2 + 1; }
-int right(int i) { return i * 2 + 2; }
-int parent(int i) { return (i-1)/2; }
-
-void callback(Point& p) {
-  cout << p.x << " " << p.y << endl;
-}
-
-// input must be sorted by the X coordinate
-// X values must be distinct!
-void build(Point input[], int start, int end, int pos) {
-  int m = (end + start - 1)/2;
-  xs[pos] = input[m].x;
-  subtrees[pos].points.clear();
-  if ((leaf[pos] = end - start == 1)) {
-    subtrees[pos].points.push_back(input[m]);
-    subtrees[pos].update_leaf(input[m]); // only necessary if Subtree class was augmented
+void build_rec(vector<Node>& src, int l, int r, int i) {
+  int m = (l+r)/2;
+  tree[i] = mk(src[m].fst, vector<Point>());
+  vector<Point>& points = tree[i].snd;
+  if (l == r) {
+    points = src[l].snd;
   } else {
-    build(input, start, m+1, left(pos));
-    build(input, m+1, end, right(pos));
-    Subtree& l = subtrees[left(pos)], r = subtrees[right(pos)];
-    merge(l.points.begin(), l.points.end(), r.points.begin(), r.points.end(),
-          back_inserter(subtrees[pos].points), cmpY);
-    subtrees[pos].update(l, r); // only for augmentation
+    build_rec(src, l, m, left(i));
+    build_rec(src, m+1, r, right(i));
+    merge(tree[left(i)].snd.begin(), tree[left(i)].snd.end(),
+          tree[right(i)].snd.begin(), tree[right(i)].snd.end(),
+          back_inserter(points), cmpY);
   }
 }
 
+int cnt;
 void report(int n, int y1, int y2) {
-  //callback(subtrees[n]); return; // uncomment to report whole subtree
-  vector<Point>& p = subtrees[n].points;
-  typename vector<Point>::iterator l = lower_bound(p.begin(), p.end(), Point(0, y1), cmpY),
-                                   r = upper_bound(p.begin(), p.end(), Point(0, y2), cmpY);
-  for (; l != r; ++l) callback(*l);
+  vector<Point>& p = tree[n].snd;
+  vector<Point>::iterator
+      l = lower_bound(all(p), Point(0, y1), cmpY),
+      r = upper_bound(all(p), Point(0, y2), cmpY);
+  //for (; l != r; ++l) { cout << p.fst<<" "<<p.snd << endl; }
+  cnt += r - l;
 }
 
 void walk(int n, int x, int y1, int y2, bool r) {
-  while (!leaf[n]) {
-    if (x <= xs[n]) {
+  while (!leaf(n)) {
+    if (x <= tree[n].fst) {
       if (r) report(right(n), y1, y2);
       n = left(n);
     } else {
@@ -75,29 +90,67 @@ void walk(int n, int x, int y1, int y2, bool r) {
       n = right(n);
     }
   }
-  if ((r && x <= xs[n]) || (!r && x >= xs[n]))
+  if ((r && x <= tree[n].fst) || (!r && x >= tree[n].fst))
     report(n, y1, y2);
 }
 
-// reports points (x, y) with x1 <= x <= x2 && y1 <= y <= y2
 void query(int x1, int x2, int y1, int y2) {
   int n = 0;
-  while (!leaf[n]) { // find split point
-    if      (x1 <= xs[n] && x2 <= xs[n]) n = left(n);
-    else if (x1 >  xs[n] && x2 >  xs[n]) n = right(n);
+  while (!leaf(n)) { // find split point
+    if      (x1 <= tree[n].fst && x2 <= tree[n].fst) n = left(n);
+    else if (x1 >  tree[n].fst && x2 >  tree[n].fst) n = right(n);
     else break;
   }
-  if (!leaf[n]) {
+  if (!leaf(n)) {
     walk(left(n), x1, y1, y2, true);
     walk(right(n), x2, y1, y2, false);
-  } else if (x1 <= xs[n] && xs[n] <= x2) {
+  } else if (x1 <= tree[n].fst && tree[n].fst <= x2) {
     report(n, y1, y2);
   }
 }
 
+void build(vector<Point>& src) {
+  assert(src.size() > 0);
+  sort(all(src));
+  vector<Node> items;
+  items.pb(mk(src[0].fst, vector<Point>()));
+  rep(i,0,src.size()) {
+    if (i > 0 && src[i-1].fst != src[i].fst)
+      items.pb(mk(src[i].fst, vector<Point>()));
+    items.back().snd.pb(src[i]);
+  }
+  N = 1;
+  while (N < items.size()) N <<= 1;
+  while (items.size() < N) items.pb(mk(inf, vector<Point>()));
+  build_rec(items, 0, N-1, 0);
+}
+
+void debug(int i=0, int indent=0) {
+  cout << string(indent, ' ');
+  cout << tree[i].fst << ": ";
+  foreach(it,tree[i].snd) cout<< it->fst << "," << it->snd << "  ";
+  cout << endl;
+  if (!leaf(i))
+    debug(left(i), indent + 2), debug(right(i), indent + 2);
+}
+
+int n, q;
 int main() {
-  Point test[] = {{7,2},{2,7},{4,5},{8,1},{5,4},{1,8},{3,6},{6,3}};
-  sort(test, test + 8, cmpX); // don't forget to sort!
-  build(test, 0, 8, 0);
-  query(2, 6, 5, 100);
+  ios::sync_with_stdio(0);
+  cout << fixed << setprecision(16);
+  vector<Point> ps;
+  cin>>n>>q;
+  rep(i,0,n) {
+    Point p; cin >> p.fst >> p.snd;
+    ps.pb(p);
+  }
+  build(ps);
+  //debug();
+  rep(i,0,q) {
+    int x1, x2, y1, y2;
+    cin >> x1 >> x2 >> y1 >> y2;
+    cnt=0;
+    query(x1,x2,y1,y2);
+    cout << cnt << endl;
+  }
 }

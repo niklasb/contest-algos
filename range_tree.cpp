@@ -40,6 +40,7 @@ typedef vector<int> vi;
 int dx[]={0,0,1,-1,1,-1,1,-1}, dy[]={-1,1,0,0,1,-1,-1,1};
 const int mod = 1e9+7,maxn=100100;
 
+// space O(n * log n), build O(n * log n), query O(log^2 n + k), k = output
 typedef int XX;
 typedef int YY;
 typedef pair<XX,YY> Point;
@@ -51,7 +52,6 @@ Node tree[maxn];
 
 int left(int i) { return (i<<1) + 1; }
 int right(int i) { return (i<<1) + 2; }
-int parent(int i) { return (i-1)>>1; }
 bool leaf(int i) { return i >= N-1; }
 bool cmpY(const Point& a, const Point& b) { return a.snd < b.snd; }
 

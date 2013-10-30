@@ -214,10 +214,9 @@ G intersectCL(const C& c, const L& l) {
   return intersectCL2(c, abs(v), v);
 }
 G intersectCS(const C& c, const L& s) {
-  G res;
-  foreach(it, intersectCL(c, s))
-    if (intersectSP(s, *it)) res.pb(*it);
-  return res;
+  G res1 = intersectCL(c,s), res2;
+  foreach(it, res1) if (intersectSP(s, *it)) res2.pb(*it);
+  return res2;
 }
 int intersectCC(const C& a, const C& b, G& res=dummy) {
   D sum = a.r + b.r, diff = abs(a.r - b.r), dst = abs(a.p - b.p);

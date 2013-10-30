@@ -206,6 +206,10 @@ G intersectCL2(const C& c, D dst, P v) {
   return res;
 }
 G intersectCL(const C& c, const L& l) {
+  if (intersectLP(l, c.p)) {
+    P h = scale(dir(l), c.r);
+    G res; res.pb(c.p + h); res.pb(c.p - h); return res;
+  }
   P v = pedal(l, c.p) - c.p;
   return intersectCL2(c, abs(v), v);
 }

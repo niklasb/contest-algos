@@ -57,7 +57,7 @@ namespace std {
 D cross(P a, P b)    { return imag(conj(a) * b); }
 D dot(P a, P b)      { return real(conj(a) * b); }
 P scale(P a, D len)  { return a * (len/abs(a)); }
-P rotate(P p, D ang) { return p * polar(1.L, ang); }
+P rotate(P p, D ang) { return p * polar(D(1), ang); }
 D angle(P a, P b)    { return arg(b) - arg(a); }
 
 int ccw(P a, P b, P c) {

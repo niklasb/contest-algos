@@ -1,123 +1,119 @@
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <cstring>
+#include <set>
+#include <stack>
 #include <queue>
+#include <deque>
+#include <map>
+#include <algorithm>
+#include <iomanip>
+#include <complex>
+#include <valarray>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <climits>
+
 using namespace std;
 
-const int MAXVARS = 10000*3;
-const int MAXN = MAXVARS*2 + 10;
-bool visit[MAXN];
-vector<int> adj[MAXN], radj[MAXN], dag[MAXN];
-int n, cnt, id[MAXN], order[MAXN], color[MAXN], ind[MAXN];
-queue<int> q1, q2;
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+//#define foreach(v,c) for(typeof((c).begin()) v=(c).begin(); v!=(c).end();++v)
+#define foreach(v,c) for(vector<int>::iterator v=(c).begin(); v!=(c).end();++v)
+#define rep(i,s,e) for (int i=(s);i<(e);++i)
+#define pb push_back
+#define mk make_pair
+#define fst first
+#define snd second
+#define all(x) (x).begin(),(x).end()
+#define clr(x,y) memset(x,y,sizeof x)
+#define contains(x,y) (x).find(y)!=(x).end()
+#define endl "\n"
 
-int var(int v) { return v*2; }
-int neg(int v) { return (v%2==0)?(v-1):(v+1); }
+int dx[]={0,0,1,-1,1,-1,1,-1}, dy[]={-1,1,0,0,1,-1,-1,1};
+const int mod = 1e9+7;
 
-void dfs(int u) {
-  visit[u] = true;
-  int i, len = adj[u].size();
-  for (i = 0; i < len; ++i)
-    if (!visit[adj[u][i]]) dfs(adj[u][i]);
-  order[cnt++] = u;
+const int maxn = 10010; // 2-sat: maxn = 2*maxvars
+vector<int> adj[maxn], radj[maxn];
+bool vis[maxn];
+int col, color[maxn];
+vector<int> bycol[maxn];
+vector<int> st;
+
+void init() { rep(i,0,maxn) adj[i].clear(), radj[i].clear(); }
+void dfs(int u, vector<int> adj[]) {
+  if (vis[u]) return;
+  vis[u] = 1;
+  foreach(it,adj[u]) dfs(*it, adj);
+  if (col) {
+    color[u] = col;
+    bycol[col].pb(u);
+  } else st.pb(u);
 }
-
-bool rdfs(int u) {
-  visit[u] = true; id[u] = cnt;
-  if (id[u] == id[neg(u)]) return false;
-  int i, len = radj[u].size();
-  for (i = 0; i < len; i++)
-    if (!visit[radj[u][i]] && !rdfs(radj[u][i])) return false;
-  return true;
-}
-
-void init() {
-  memset(visit, 0, sizeof visit);
-  memset(id, 0, sizeof(id));
-  memset(ind, 0, sizeof ind );
-  memset(color, 0, sizeof color);
-  while (!q1.empty()) q1.pop(); while (!q2.empty()) q2.pop();
-  for (int i = 0; i < MAXN; ++i)
-    adj[i].clear(), radj[i].clear(), dag[i].clear();
-}
-
-bool kosaraju() {
-  int i;
-  for (cnt = 0, i = 1; i <= 2*n; i++) if (!visit[i]) dfs(i);
-  memset(visit, 0, sizeof visit);
-  for (cnt = 0, i = 2*n-1; i >= 0; i--)
-    if (!visit[order[i]]) {
-      cnt++;
-      if (!rdfs(order[i])) return false;
-    }
-  return true;
-}
-
-void topsort() {
-  for (int i = 1; i <= 2*n; i++){
-    int len = adj[i].size();
-    for (int j = 0; j < len; j++)
-      if (id[i] != id[adj[i][j]]) {
-        dag[id[adj[i][j]]].push_back(id[i]);
-        ind[id[i]]++;
-      }
+void kosaraju(int n) { // n = number of nodes
+  st.clear();
+  clr(vis,0);
+  col=0;
+  rep(i,0,n) dfs(i,adj);
+  clr(vis,0);
+  clr(color,0);
+  while(!st.empty()) {
+    bycol[++col].clear();
+    int x = st.back(); st.pop_back();
+    if(color[x]) continue;
+    dfs(x, radj);
   }
-  for (int i = 1; i <= cnt; i++) if (ind[i] == 0) q1.push(i);
-
-  int i,j,len,now,p,pid;
-  while (!q1.empty()) {
-    now = q1.front(); q1.pop();
-    if (color[now] != 0) continue ;
-    color[now] = 'R'; ind[now] = -1;
-    for (i=1; i <= 2*n; i++) {
-      if (id[i] == now) {
-        p = (i%2) ? i+1 : i-1; pid=id[p]; q2.push(pid);
-        while (!q2.empty()) {
-          pid = q2.front(); q2.pop();
-          if (color[pid] == 'B') continue ;
-          color[pid] = 'B';
-          int len = dag[pid].size();
-          for(j = 0; j < len; j++) q2.push(dag[pid][j]);
-        }
-      }
-    }
-    len = dag[now].size();
-    for (i = 0; i < len; i++) {
-      ind[dag[now][i]]--;
-      if (ind[dag[now][i]] == 0) q1.push(dag[now][i]);
+}
+// 2-SAT
+int assign[maxn]; // for 2-sat only
+int var(int x) { return x<<1; }
+bool solvable(int vars) {
+  kosaraju(2*vars);
+  rep(i,0,vars) if (color[var(i)] == color[1^var(i)]) return 0;
+  return 1;
+}
+void assign_vars() {
+  clr(assign,0);
+  rep(c,1,col+1) {
+    foreach(it,bycol[c]) {
+      int v = *it >> 1;
+      bool neg = *it&1;
+      if (assign[v]) continue;
+      assign[v] = neg?1:-1;
     }
   }
 }
-
 void add_impl(int v1, int v2) { adj[v1].push_back(v2); radj[v2].push_back(v1); }
 void add_equiv(int v1, int v2) { add_impl(v1, v2); add_impl(v2, v1); }
-void add_or(int v1, int v2) { add_impl(neg(v1), v2); add_impl(neg(v2), v1); }
-void add_xor(int v1, int v2) { add_or(v1, v2); add_or(neg(v1), neg(v2)); }
-void add_true(int v1) { add_impl(neg(v1), v1); }
+void add_or(int v1, int v2) { add_impl(1^v1, v2); add_impl(1^v2, v1); }
+void add_xor(int v1, int v2) { add_or(v1, v2); add_or(1^v1, 1^v2); }
+void add_true(int v1) { add_impl(1^v1, v1); }
 void add_and(int v1, int v2) { add_true(v1); add_true(v2); }
 
-// n = number of variables, variables start at 1
-// clauses are of the form "[op] 1 -2" (-2 means negation of variable 2)
+int parse(int i) {
+  if (i>0) return var(i-1);
+  else return 1^var(-i-1);
+}
 int main() {
-  int m; cin >> n >> m; // m = number of clauses to follow
-  init();
+  int n, m; cin >> n >> m; // m = number of clauses to follow
   while (m--) {
     string op; int x, y; cin >> op >> x >> y;
-    x = (x > 0) ? var(x) : neg(var(-x));
-    y = (y > 0) ? var(y) : neg(var(-y));
+    x = parse(x);
+    y = parse(y);
     if (op == "or") add_or(x, y);
     if (op == "and") add_and(x, y);
     if (op == "xor") add_xor(x, y);
     if (op == "imp") add_impl(x, y);
     if (op == "equiv") add_equiv(x, y);
   }
-  if (!kosaraju()) {
+  if (!solvable(n)) {
     cout << "Impossible" << endl; return 0;
   }
-  topsort();
-  for (int i = 1; i <= n; i++){
-    if (color[id[var(i)]] == 'R') cout << i << endl;
-    else cout << -i << endl;
-  }
+  assign_vars();
+  rep(i,0,n) cout << ((assign[i]>0)?(i+1):-i-1) << endl;
 }

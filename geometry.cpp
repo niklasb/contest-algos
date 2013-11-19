@@ -50,7 +50,7 @@ D fixzero(D x, int d) { return (x>0 || x<=-5/pow(10,d+1)) ? x:0; }
 typedef complex<D> P;
 namespace std {
   bool operator<(const P& a, const P& b) {
-    return real(a)!=real(b) ? real(a)<real(b) : imag(a)<imag(b);
+    return mk(real(a), imag(a)) < mk(real(b), imag(b));
   }
 }
 

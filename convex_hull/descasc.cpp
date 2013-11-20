@@ -1,9 +1,9 @@
 // convex hull, minimum
 vector<ll> M, B;
 int ptr;
-bool bad(int l1,int l2,int l3) {
+bool bad(int a,int b,int c) {
   // use deterministic comuputation with long long if sufficient
-  return (long double)(B[l3]-B[l1])*(M[l1]-M[l2])<(long double)(B[l2]-B[l1])*(M[l1]-M[l3]);
+  return (long double)(B[c]-B[a])*(M[a]-M[b])<(long double)(B[b]-B[a])*(M[a]-M[c]);
 }
 // insert with non-increasing m
 void insert(ll m, ll b) {

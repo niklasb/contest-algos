@@ -157,7 +157,7 @@ void graham_step(G& a, G& st, int i, int bot) {
   st.pb(a[i]);
 }
 bool cmpY(P a, P b) { return mk(imag(a),real(a)) < mk(imag(b),real(b)); }
-G graham_scan(const G& points) {
+G graham_scan(const G& points) { // will return points in ccw order
   // special case: all points coincide, algo might return point twice
   G a = points; sort(all(a),cmpY);
   int n = a.size();

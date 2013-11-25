@@ -133,6 +133,8 @@ L bisector(P a, P b) {
 }
 
 #define next(g,i) g[(i+1)%g.size()]
+#define prev(g,i) g[(i+g.size()-1)%g.size()]
+L edge(const G& g, int i) { return line(g[i], next(g,i)); }
 D area(const G& g) {
   D A = 0;
   rep(i,0,g.size())
@@ -150,6 +152,37 @@ G convex_cut(const G& g, const L& l) {
       Q.pb(crosspoint(line(A, B), l));
   }
   return Q;
+}
+G convex_intersect(G a, G b) { // intersect two convex polygons
+  rep(i,0,b.size())
+    a = convex_cut(a, edge(b, i));
+  return a;
+}
+void triangulate(G g, vector<G>& res) { // triangulate a simple polygon
+  while (g.size() > 3) {
+    bool found = 0;
+    rep(i,0,g.size()) {
+      if (ccw(prev(g,i), g[i], next(g,i)) != +1) continue;
+      G tri;
+      tri.pb(prev(g,i));
+      tri.pb(g[i]);
+      tri.pb(next(g,i));
+      bool valid = 1;
+      rep(j,0,g.size()) {
+        if ((j+1)%g.size() == i || j == i || j == (i+1)%g.size()) continue;
+        if (convex_contain(tri, g[j])) {
+          valid = 0;
+          break;
+        }
+      }
+      if (!valid) continue;
+      res.pb(tri);
+      g.erase(g.begin() + i);
+      found = 1; break;
+    }
+    assert(found);
+  }
+  res.pb(g);
 }
 void graham_step(G& a, G& st, int i, int bot) {
   while (st.size()>bot && sgn(cross(*(st.end()-2), st.back(), a[i]))<=0)
@@ -175,25 +208,39 @@ G voronoi_cell(G g, const vector<P> &v, int s) {
       g = convex_cut(g, bisector(v[s], v[i]));
   return g;
 }
-bool convex_contain(const G& g, P p) {
+bool convex_contain(const G& g, P p) { // check if point is inside convex polygon
   rep(i,0,g.size())
     if (ccw(g[i], next(g, i), p) == -1) return 0;
   return 1;
+}
+const int ray_iters = 20;
+bool simple_contain(const G& g, P p) { // check if point is inside simple polygon
+  int yes = 0;
+  rep(_,0,ray_iters) {
+    D angle = 2*pi * (D)rand() / RAND_MAX;
+    P dir = rotate(P(inf,inf), angle);
+    L s = line(p, p + dir);
+    int cnt = 0;
+    rep(i,0,g.size()) {
+      if (intersectSS(edge(g, i), s)) cnt++;
+    }
+    yes += cnt%2;
+  }
+  return yes > ray_iters/2;
 }
 bool intersectGG(const G& g1, const G& g2) {
   if (convex_contain(g1, g2[0])) return 1;
   if (convex_contain(g2, g1[0])) return 1;
   rep(i,0,g1.size()) rep(j,0,g2.size()) {
-    if (intersectSS(line(g1[i], next(g1, i)), line(g2[j], next(g2, j)))) return 1;
+    if (intersectSS(edge(g1, i), edge(g2, j))) return 1;
   }
   return 0;
 }
 D distanceGP(const G& g, P p) {
   if (convex_contain(g, p)) return 0;
   D res = inf;
-  rep(i,0,g.size()) {
-    res = min(res, distanceSP(line(g[i], next(g, i)), p));
-  }
+  rep(i,0,g.size())
+    res = min(res, distanceSP(edge(g, i), p));
   return res;
 }
 P centroid(const G& v) {
@@ -274,6 +321,7 @@ P project_plane(const P3& v, P3 w, const P3& p) {
   w -= project(v,w)*v;
   return P(dot(p,v)/abs(v), dot(p,w)/abs(w));
 }
+
 template <typename T, int N> struct Matrix {
   T data[N][N];
   Matrix<T,N>() { clr(data,0); }

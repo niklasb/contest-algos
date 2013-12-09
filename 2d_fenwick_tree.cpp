@@ -20,15 +20,18 @@ int read_prefix(int x, int y) {
   return res;
 }
 
-// 2D prefix-update prefix-query
-typedef ll Tree[maxn][maxn];
+// 2D range-update range-query
+// uses additively written, abelian group structure of T
+// redefine T + T, T - T, T * int, -T to your needs
+typedef ll T;
+typedef T Tree[maxn][maxn];
 Tree A, B, C, D;
-void update_idx(Tree t, int x, int y, ll val) {
+void update_idx(Tree t, int x, int y, T val) {
   for (int  i = x; i <= max_x; i += i & -i)
     for (int j = y; j <= max_y; j += j & -j)
-      t[i][j] += val;
+      t[i][j] = t[i][j] + val;
 }
-void update_prefix(int x, int y, ll val) {
+void update_prefix(int x, int y, T val) {
   update_idx(A, 1, 1, val);
 
   update_idx(A, 1, y + 1, -val);
@@ -42,28 +45,28 @@ void update_prefix(int x, int y, ll val) {
   update_idx(C, x + 1, y + 1, -val * x);
   update_idx(D, x + 1, y + 1, val * x * y);
 }
-ll read_prefix(int x, int y) {
-  ll a, b, c, d;
+T read_prefix(int x, int y) {
+  T a, b, c, d;
   a = b = c = d = 0;
   for (int  i = x; i > 0; i -= i & -i)
     for (int j = y; j > 0; j -= j & -j) {
-      a += A[i][j]; b += B[i][j]; c += C[i][j]; d += D[i][j];
+      a = a + A[i][j]; b = b + B[i][j]; c = c + C[i][j]; d = d + D[i][j];
     }
   return a * x * y + b * x + c * y + d;
 }
 // helpers
-void update_range(int x1, int y1, int x2, int y2, ll val) {
+void update_range(int x1, int y1, int x2, int y2, T val) {
   update_prefix(x2, y2, val);
   update_prefix(x1 - 1, y2, -val);
   update_prefix(x2, y1 - 1, -val);
   update_prefix(x1 - 1, y1 - 1, val);
 }
-ll read_range(int x1, int y1, int x2, int y2) {
+T read_range(int x1, int y1, int x2, int y2) {
   return read_prefix(x2, y2)
             - read_prefix(x1 - 1, y2) - read_prefix(x2, y1 - 1)
             + read_prefix(x1 - 1, y1 - 1);
 }
-ll read_idx(int x, int y) {
+T read_idx(int x, int y) {
   return read_range(x,y,x,y);
 }
 

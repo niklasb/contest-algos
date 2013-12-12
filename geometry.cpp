@@ -153,6 +153,11 @@ G convex_cut(const G& g, const L& l) {
   }
   return Q;
 }
+bool convex_contain(const G& g, P p) { // check if point is inside convex polygon
+  rep(i,0,g.size())
+    if (ccw(g[i], next(g, i), p) == -1) return 0;
+  return 1;
+}
 G convex_intersect(G a, G b) { // intersect two convex polygons
   rep(i,0,b.size())
     a = convex_cut(a, edge(b, i));
@@ -207,11 +212,6 @@ G voronoi_cell(G g, const vector<P> &v, int s) {
     if (i!=s)
       g = convex_cut(g, bisector(v[s], v[i]));
   return g;
-}
-bool convex_contain(const G& g, P p) { // check if point is inside convex polygon
-  rep(i,0,g.size())
-    if (ccw(g[i], next(g, i), p) == -1) return 0;
-  return 1;
 }
 const int ray_iters = 20;
 bool simple_contain(const G& g, P p) { // check if point is inside simple polygon
@@ -282,7 +282,7 @@ G intersectCL(const C& c, const L& l) {
 }
 G intersectCS(const C& c, const L& s) {
   G res1 = intersectCL(c,s), res2;
-  foreach(it, res1) if (intersectSP(s, *it)) res2.pb(*it);
+  for(auto it: res1) if (intersectSP(s, it)) res2.pb(it);
   return res2;
 }
 int intersectCC(const C& a, const C& b, G& res=dummy) {

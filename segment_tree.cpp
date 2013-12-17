@@ -1,166 +1,108 @@
-// http://www.spoj.pl/problems/SEGSQRSS/
-#include <iostream>
-#include <cstdlib>
-#include <cmath>
+const int maxn = 50500;
+const int maxl = 16; // = ceil(log_2(maxn))
+const int inf = 1 << 29;
+int N = 1 << maxl;
 
-using namespace std;
+int left(int i) { return 2 * i; }
+int right(int i) { return 2 * i + 1; }
 
-typedef long long LL;
-#define REP(i,n) for (int i = 0; i < (n); ++i)
-
-const int maxn = 1<<17;
-
-enum ActionType { ACTION_ADD = 0, ACTION_SET };
-struct Action {
-  int z;
-  ActionType type;
-  Action(ActionType tt, int zz) : z(zz), type(tt) { }
-  Action() : z(0), type(ACTION_ADD) {}
+struct Range {
+    int max_left;
+    int max_left1;
+    int max_right;
+    int max_right1;
+    int max_mid1;
+    int sum;
+    int count;
 };
+Range NULL_RANGE = {0, -inf, 0, -inf, -inf, 0, 0};
+
+Range operator+(const Range& l, const Range& r) {
+    return {
+        max(l.sum + r.max_left, l.max_left),
+        max(l.sum + ((l.count > 0) ? r.max_left : r.max_left1),
+            l.max_left1),
+
+        max(r.sum + l.max_right, r.max_right),
+        max(r.sum + ((r.count > 0) ? l.max_right : l.max_right1),
+            r.max_right1),
+
+        max(    l.max_mid1,
+            max(r.max_mid1,
+            max(l.max_right1 + r.max_left,
+                l.max_right + r.max_left1))),
+        l.sum + r.sum,
+        l.count + r.count,
+    };
+}
+
+enum ActionType { ACTION_ID = 0, ACTION_SET };
+struct Action {
+    ActionType type;
+    int val;
+    Range apply(const Range& r) {
+        if (type == ACTION_ID) return r;
+        int w = r.count;
+        return {
+            max(0, val * w),
+            max(val, val * w),
+            max(0, val * w),
+            max(val, val * w),
+            max(val, val * w),
+            val * w,
+            w,
+        };
+    }
+};
+Action NULL_ACTION = { ACTION_ID, 0 };
+Action operator+(const Action& a, const Action& b) {
+    if (b.type == ACTION_SET) return b;
+    else return a;
+}
+
 struct Node {
-  // variables: x = sum of values beneath the node, y = sum of squares of values
-  // x and y are always correctly updated if there is no outstanding action in the parent node
-  int x, y;
-  Action action; // this action needs to be lazily applied to all children of the node
-} nodes[2*maxn+10];
+  int lo, hi;
+  Range r;
+  Action action;
+  Range range() { return action.apply(r); }
+} t[1 << (maxl + 1)];
 
-int left(int i) { return 2*i + 1; }
-int right(int i) { return 2*i + 2; }
-int parent(int i) { return (i-1)/2; }
-
-int n; // needs to be set to a power of 2!
-
-void maintain(int x) {
-  nodes[x].x = nodes[left(x)].x + nodes[right(x)].x;
-  nodes[x].y = nodes[left(x)].y + nodes[right(x)].y;
+void maintain(int i) {
+  t[i].r = t[left(i)].range() + t[right(i)].range();
+  t[i].action = NULL_ACTION;
 }
 
-void build() {
-  for (int i = n - 2; i >= 0; --i) maintain(i);
-  REP(i, 2*n-1) nodes[i].action = Action();
+void update(int x, const Action& a, int ql, int qr);
+void push_down(int x) {
+  update(left(x), t[x].action, -inf, inf);
+  update(right(x), t[x].action, -inf, inf);
 }
 
-void resolve(const Action& act, int x, int a, int b) {
-  if (act.type == ACTION_SET) {
-    nodes[x].y = (b-a)*act.z*act.z;
-    nodes[x].x = (b-a)*act.z;
-    nodes[x].action = act; // mark children for update
-  } else { // ACTION_ADD
-    nodes[x].y += (b-a)*act.z*act.z + 2*act.z*nodes[x].x;
-    nodes[x].x += (b-a)*act.z;
-    nodes[x].action.z += act.z; // update saved action (in this case, incrementing
-                                // z is correct for both ACTION_SET and ACTION_ADD
-  }
-}
-
-// [ia, ib) is the update interval, x is the root of the current partial tree and [a,b)
-// is the key range represented by x
-void range_action(const Action& act, int ia, int ib, int x, int a, int b) {
-  ia = max(ia, a); ib = min(ib, b); // intersect interval
-  if (ia >= ib) return;
-  if (ia == a and ib == b) {
-    resolve(act, x, a, b); // we can respond to the update in O(1)
+void update(int x, const Action& a, int ql, int qr) {
+  if (t[x].hi < ql || t[x].lo > qr) return;
+  if (ql <= t[x].lo && t[x].hi <= qr) {
+    t[x].action = t[x].action + a;
     return;
   }
-  int m = (a+b)/2;
-  // push update to the children. We first need to push the outstanding update
-  range_action(nodes[x].action, a, m, left(x), a, m);
-  range_action(nodes[x].action, m, b, right(x), m, b);
-  // now we can push the new update
-  range_action(act, ia, ib, left(x), a, m);
-  range_action(act, ia, ib, right(x), m, b);
-  nodes[x].action = Action(); // reset action for the current node, because
-                              // updates have been pushed to the children
-  maintain(x); // compute new values for x from the values of the children
+  push_down(x);
+  update(left(x), a, ql, qr);
+  update(right(x), a, ql, qr);
+  maintain(x);
 }
 
-LL range_query(int ia, int ib, int x, int a, int b) {
-  ia = max(ia, a); ib = min(ib, b);
-  if (ia >= ib) return 0;
-  if (ia == a && ib == b) return nodes[x].y;
-  int m = (a+b)/2;
-  // we need to resolve the outstanding update for the current node before
-  // recursing
-  resolve(nodes[x].action, left(x), a, m);
-  resolve(nodes[x].action, right(x), m, b);
-  nodes[x].action = Action(); // we can delete the lazy action now because it was pushed
-                              // to the children
-  return range_query(ia, ib, left(x), a, m) + range_query(ia, ib, right(x), m, b);
+Range query(int x, int ql, int qr) {
+  if (t[x].hi < ql || t[x].lo > qr) return NULL_RANGE;
+  if (ql <= t[x].lo && t[x].hi <= qr) return t[x].range();
+  push_down(x);
+  return query(left(x), ql, qr) + query(right(x), ql, qr);
 }
 
-int main() {
-  ios_base::sync_with_stdio(false);
-  int T, Q; cin >> T;
-  for (int t = 1; t <= T; ++t) {
-    int N; cin >> N >> Q;
-    n = 1<<(int)ceil(log(N)/log(2));
-    for (int i = 0; i < N; ++i) {
-      cin >> nodes[n+i-1].x;
-      nodes[n+i-1].y = nodes[n+i-1].x * nodes[n+i-1].x;
+// nodes reside in t[N..2N - 1], initialize those first
+void init() {
+    rep(i,0,N) t[N + i].lo = t[N + i].hi = i;
+    for (int i = N - 1; i >= 1; --i) {
+        maintain(i);
+        t[i].lo = t[left(i)].lo;
+        t[i].hi = t[right(i)].hi;
     }
-    build();
-    cout << "Case " << t << ":\n";
-    while (Q--) {
-      int op; cin >> op;
-      if (op == 2) {
-        int a, b; cin >> a >> b;
-        cout << range_query(a-1, b, 0, 0, n) << endl;
-      } else if (op == 1) {
-        int a, b, x; cin >> a >> b >> x;
-        range_action(Action(ACTION_ADD, x), a-1, b, 0, 0, n);
-      } else if (op == 0) {
-        int a, b, x; cin >> a >> b >> x;
-        range_action(Action(ACTION_SET, x), a-1, b, 0, 0, n);
-      } else {
-        // debug info
-        for (int i = 0; i < 2*n-1; ++i)
-          cout << nodes[i].x << "/" << nodes[i].y << "/" << nodes[i].action.type << "/" << nodes[i].action.z << " ";
-        cout<<endl;
-      }
-    }
-  }
-}
-
-int ary[maxn];
-int test() {
-  n = 1<<10;
-  for (int i = 0; i < n; ++i) {
-    ary[i] = nodes[n+i-1].x = rand() % 10 - 5;
-    nodes[n+i-1].y = nodes[n+i-1].x * nodes[n+i-1].x;
-  }
-  build();
-  int q = 1000;
-  srand(time(NULL));
-  //for (int j = 0; j < n; ++j) cout << ary[j] << " "; cout << endl;
-  LL total = 0;
-  for (int i = 0; i < q; ++i) {
-    int op = rand() % 3;
-    if (op == 2) {
-      int a = rand() % n;
-      int b = rand() % (n-a) + a + 1;
-      int x = rand() % 10 - 5;
-      //cout << "add " << a << " " << b << " " << x << endl;
-      range_action(Action(ACTION_SET, x), a, b, 0, 0, n);
-      for (int j = a; j < b; ++j) ary[j] = x;
-    } if (op == 1) {
-      int a = rand() % n;
-      int b = rand() % (n-a) + a + 1;
-      int x = rand() % 10 - 5;
-      //cout << "add " << a << " " << b << " " << x << endl;
-      range_action(Action(ACTION_ADD, x), a, b, 0, 0, n);
-      for (int j = a; j < b; ++j) ary[j] += x;
-    } else if (op == 0) {
-      int a = rand() % n;
-      int b = rand() % (n-a) + a + 1;
-      //cout << "query " << a << " " << b << endl;
-      LL res1 = range_query(a, b, 0, 0, n);
-      total += res1;
-      LL res2 = 0;
-      for (int j = a; j < b; ++j) res2 += ary[j] * ary[j];
-      //for (int j = 0; j < n; ++j) cout << ary[j] << " "; cout << endl;
-      if (res2 && res1 != res2)
-        cout << "ERROR " << res1 << " " << res2 << endl;
-    }
-  }
-  cout << total << endl;
 }

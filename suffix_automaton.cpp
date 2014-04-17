@@ -1,4 +1,4 @@
-struct SuffixAutomaton { // can be used for Aho-Corasick, LCS and others
+struct SuffixAutomaton { // can be used for LCS and others
     struct State {
         int depth, id;
         State *go[128], *suffix;

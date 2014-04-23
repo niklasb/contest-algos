@@ -9,6 +9,16 @@ int read_prefix(int tree[], int i) { // get sum v[1..i]
   for (; i > 0; i -= i & -i) sum += tree[i];
   return sum;
 }
+int kth(int k) { // find kth element in tree (1-based index)
+  int ans = 0, s = 0;
+  for (int i = maxl; i >= 0; --i) // maxl = largest i s.t. (1<<i) <= n
+    if (s + tree[ans + (1<<i)] < k) {
+      ans += 1<<i;
+      s += tree[ans];
+    }
+  return ans+1;
+}
+
 // mode 2: update prefixes, read indices
 void update_prefix(int tree[], int i, int val) { // v[1..i] += val
   for (; i > 0; i -= i & -i) tree[i] += val;

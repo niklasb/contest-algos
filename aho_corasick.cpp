@@ -1,61 +1,50 @@
-const int K = 10;
+const int K = 20;
 struct vertex {
-  int next[K];
+  vertex *next[K], *go[K], *link, *p;
+  int pch;
   bool leaf;
-  int p;
-  char pch;
-  int link;
-  int go[K];
+  int is_accepting = -1;
 };
 
-vertex t[1200];
-int root=1;
-int top=2;
-
-void init() {
-  root = 1;
-  t[root] = {0};
-  top = 2;
+vertex *create() {
+  vertex *root = new vertex();
+  root->link = root;
+  return root;
 }
 
-void add_string (const string & s) {
-  int v = 0;
-  for (char c: s) {
-    int a = c-'0';
-    if (!t[v].next[a]) {
-      t[top] = {0};
-      t[top].p = v;
-      t[top].pch = a;
-      t[v].next[a] = top++;
+void add_string (vertex *v, const vector<int>& s) {
+  for (int a: s) {
+    if (!v->next[a]) {
+      vertex *w = new vertex();
+      w->p = v;
+      w->pch = a;
+      v->next[a] = w;
     }
-    v = t[v].next[a];
+    v = v->next[a];
   }
-  t[v].leaf = 1;
+  v->leaf = 1;
 }
 
-int go(int v, int c);
+vertex* go(vertex* v, int c);
 
-int get_link(int v) {
-  if (!t[v].link) {
-    if (v == 0 || t[v].p == 0)
-      t[v].link = 0;
+vertex* get_link(vertex *v) {
+  if (!v->link)
+    v->link = v->p->p ? go(get_link(v->p), v->pch) : v->p;
+  return v->link;
+}
+
+vertex* go(vertex* v, int c) {
+  if (!v->go[c]) {
+    if (v->next[c])
+      v->go[c] = v->next[c];
     else
-      t[v].link = go(get_link (t[v].p), t[v].pch);
+      v->go[c] = v->p ? go(get_link(v), c) : v;
   }
-  return t[v].link;
+  return v->go[c];
 }
 
-int go(int v, int c) {
-  if (!t[v].go[c]) {
-    if (t[v].next[c])
-      t[v].go[c] = t[v].next[c];
-    else
-      t[v].go[c] = v==0 ? 0 : go(get_link(v), c);
-  }
-  return t[v].go[c];
-}
-
-// TODO this seems wrong. Maybe we shouldn't forget the intermediate links
-bool is_accepting(int v) {
-  return t[v].leaf || t[get_link(v)].leaf;
+bool is_accepting(vertex *v) {
+  if (v->is_acceping == -1)
+    v->is_accepting = v->leaf || is_accepting(get_link(v));
+  return v->is_accepting;
 }

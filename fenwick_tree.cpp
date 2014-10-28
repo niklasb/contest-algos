@@ -10,11 +10,11 @@ int read_prefix(int tree[], int i) { // get sum v[1..i]
   return sum;
 }
 int kth(int k) { // find kth element in tree (1-based index)
-  int ans = 0, s = 0;
+  int ans = 0;
   for (int i = maxl; i >= 0; --i) // maxl = largest i s.t. (1<<i) <= n
-    if (s + tree[ans + (1<<i)] < k) {
+    if (ans + (1<<i) <= N && tree[ans + (1<<i)] < k) {
       ans += 1<<i;
-      s += tree[ans];
+      k -= tree[ans];
     }
   return ans+1;
 }

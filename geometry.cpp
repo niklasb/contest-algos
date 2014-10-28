@@ -1,42 +1,3 @@
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <set>
-#include <stack>
-#include <queue>
-#include <deque>
-#include <map>
-#include <valarray>
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
-#include <algorithm>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cmath>
-#include <climits>
-#include <iomanip>
-#include <complex>
-#include <cassert>
-
-using namespace std;
-using namespace std::tr1;
-
-typedef long long ll;
-typedef pair<int, int> pii;
-typedef vector<int> vi;
-#define foreach(v,c) for(typeof((c).begin()) v=(c).begin(); v!=(c).end();++v)
-#define rep(i,s,e) for (int i=(s);i<(e);++i)
-#define pb push_back
-#define mk make_pair
-#define X first
-#define Y second
-#define all(x) (x).begin(),(x).end()
-#define clr(x,y) memset(x,y,sizeof x)
-#define contains(x,y) (x).find(y)!=(x).end()
-#define endl "\n"
-
 typedef long double D;
 const D eps=1e-12, inf=1e15, pi=acos(-1), e=exp(1.);
 
@@ -45,6 +6,7 @@ D rem(D x, D y) { return fmod(fmod(x,y)+y,y); }
 D rtod(D rad) { return rad*180/pi; }
 D dtor(D deg) { return deg*pi/180; }
 int sgn(D x) { return (x > eps) - (x < -eps); }
+// when doing printf("%.Xf", x), fix '-0' output to '0'.
 D fixzero(D x, int d) { return (x>0 || x<=-5/pow(10,d+1)) ? x:0; }
 
 typedef complex<D> P;
@@ -207,6 +169,24 @@ G graham_scan(const G& points) { // will return points in ccw order
   while (st.size() > 1 && !sgn(abs(st.back() - st.front()))) st.pop_back();
   return st;
 }
+G gift_wrap(const G& points) { // will return points in clockwise order
+  // special case: duplicate points, not sure what happens then
+  int n = points.size();
+  if (n<=2) return points;
+  G res;
+  P nxt, p = *min_element(all(points), [](const P& a, const P& b){
+    return real(a) < real(b);
+  });
+  do {
+    res.pb(p);
+    nxt = points[0];
+    for (auto& q: points)
+      if (abs(p - q) > eps && (abs(p - nxt) < eps || ccw(p, nxt, q) == 1))
+        nxt = q;
+    p = nxt;
+  } while (nxt != *begin(res));
+  return res;
+}
 G voronoi_cell(G g, const vector<P> &v, int s) {
   rep(i,0,v.size())
     if (i!=s)
@@ -359,24 +339,5 @@ template<typename M> void create_rot_matrix(M& m, double x[3], double a) {
     m[i][j] = x[i]*x[j]*(1-cos(a));
     if (i == j) m[i][j] += cos(a);
     else m[i][j] += x[(6-i-j)%3] * ((i == (2+j) % 3) ? -1 : 1) * sin(a);
-  }
-}
-
-int main() {
-  ios::sync_with_stdio(0);
-  cout << fixed << setprecision(3);
-  D x1,y1,x2,y2,r1,r2;
-  vector<P> ip;
-  while (cin >> x1 >> y1 >> r1 >> x2 >> y2 >> r2) {
-    ip.clear();
-    int res = intersectCC(C(P(x1,y1),r1), C(P(x2,y2),r2), ip);
-    if (res==0) cout << "NO INTERSECTION";
-    else if (res==-1) cout << "THE CIRCLES ARE THE SAME";
-    sort(all(ip));
-    rep(i,0,ip.size()) {
-      cout << "(" << fixzero(real(ip[i]),3) << "," << fixzero(imag(ip[i]),3) << ")";
-      //cout << "(" << real(ip[i]) << "," << imag(ip[i]) << ")";
-    }
-    cout << endl;
   }
 }

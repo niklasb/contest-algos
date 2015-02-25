@@ -50,15 +50,6 @@ struct Tree {
   void maintain() { sz = cnt + (child[0]?child[0]->sz:0) + (child[1]?child[1]->sz:0); }
   void setchild(bool c, Tree* t) { child[c]=t; maintain(); }
 };
-void print(Tree *t, int indent=0) {
-  rep(i,0,indent) cout << " ";
-  if (!t) {cout << "NIL:0:0" << endl;return;}
-  //if (t->val==sentinel) {cout<<"-oo:0:0"<<endl;return;}
-  cout << t->val << "/" << t->cnt << " "<< t->sz << endl;
-  rep(i,0,2) print(t->child[i], indent+2);
-  if(!indent) cout << "=========="<<endl;
-}
-
 void rotate(Tree*& t, bool c) {
   Tree *x = t->child[c];
   t->setchild(c, x->child[!c]);
@@ -125,6 +116,15 @@ T select(Tree* t, int k) { // ranks start at 0
 T getrank(Tree*& t, T x) { // find min i with select(t,i) > x }
   splaypred(t,x);
   return (t->child[0] ? t->child[0]->sz : 0) + t->cnt*(t->val != x);
+}
+
+void print(Tree *t, int indent=0) {
+  rep(i,0,indent) cout << " ";
+  if (!t) {cout << "NIL:0:0" << endl;return;}
+  //if (t->val==sentinel) {cout<<"-oo:0:0"<<endl;return;}
+  cout << t->val << "/" << t->cnt << " "<< t->sz << endl;
+  rep(i,0,2) print(t->child[i], indent+2);
+  if(!indent) cout << "=========="<<endl;
 }
 
 Tree* fromAry(T ary[], int len) {

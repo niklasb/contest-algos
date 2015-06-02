@@ -335,3 +335,19 @@ int get_derangement_mod_m(int n, int m) {
   return res[n % (2 * m)];
 }
 
+// simple modinv, returns 0 if inverse doesn't exist
+ll inv(ll a, ll m) {
+  return a < 2 ? a : ((1 - m * 1ll * inv(m % a, a)) / a % m + m) % m;
+}
+
+// compute totient function for integers <= n
+int* compute_phi(int n) {
+  int *phi = new int[n + 1];
+  for (int i = 1; i <= n; ++i) {
+    phi[i] += i;
+    for (int j = 2 * i; j <= n; j += i) {
+      phi[j] -= phi[i];
+    }
+  }
+  return phi;
+}

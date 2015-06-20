@@ -1,22 +1,22 @@
-#include <map>
-#include <cstring>
+#include <bits/stdc++.h>
 using namespace std;
 
-typedef long long llong;
+using ll=long long;
+using ull=unsigned long long;
 
 const int crt_maxlen = 500;
 const int maxm = 100010;
 // maximum number of digits of n in base p
 const int binomod_maxdigs = 100;
 
-llong gcd(llong a, llong b) {
-  llong t;
+ll gcd(ll a, ll b) {
+  ll t;
   while (b) t = b, b = a % b, a = t;
   return a;
 }
 
-llong extended_gcd(llong a, llong b, llong& lastx, llong& lasty) {
-  llong x, y, q, tmp;
+ll extended_gcd(ll a, ll b, ll& lastx, ll& lasty) {
+  ll x, y, q, tmp;
   x = 0; lastx = 1;
   y = 1; lasty = 0;
   while (b != 0) {
@@ -34,9 +34,9 @@ llong extended_gcd(llong a, llong b, llong& lastx, llong& lasty) {
 // returns the number of solutions up to congruence (can be 0)
 //    sol: the minimal positive solution
 //    dis: the distance between solutions
-llong linear_mod(llong a, llong b, llong n, llong &sol, llong &dis) {
+ll linear_mod(ll a, ll b, ll n, ll &sol, ll &dis) {
   a = (a % n + n) % n, b = (b % n + n) % n;
-  llong d, x, y;
+  ll d, x, y;
   d = extended_gcd(a, n, x, y);
   if (b % d)
     return 0;
@@ -47,38 +47,44 @@ llong linear_mod(llong a, llong b, llong n, llong &sol, llong &dis) {
   return d;
 }
 
-llong powmod(llong base, llong exp, llong m) {
-  llong result = 1;
-  while (exp) {
-    if (exp & 1)
-      result = (result * base) % m;
-    exp >>= 1;
-    base = (base * base) % m;
-  }
-  return result;
+ll multiply_mod(ll a, ll b, ll mod) {
+    ull r = 0;
+    a %= mod, b %= mod;
+    while (b) {
+        if (b & 1) r = (r + a) % mod;
+        b >>= 1, a = ((ull)a << 1) % mod;
+    }
+    return r;
+}
+
+ll powmod(ll a, ll n, ll mod) {
+  if (n == 0) return 1 % mod;
+  if (n & 1) return multiply_mod(powmod(a, n-1, mod), a, mod);
+  ll y = powmod(a, n/2, mod);
+  return multiply_mod(y, y, mod);
 }
 
 // only works correctly for non-negative a!
-llong modinv(llong a, llong m) {
-  llong lastx, lasty;
+ll modinv(ll a, ll m) {
+  ll lastx, lasty;
   extended_gcd(a, m, lastx, lasty);
   while (lastx < 0)
     lastx += m;
   return lastx;
 }
 
-llong modinv_prime(llong a, llong p) {
+ll modinv_prime(ll a, ll p) {
   return powmod(a, p-2, p);
 }
 
 const int pmax = 1000000;
 static map<int, int> pfacs[pmax+1];
-void precompute_primefacs(llong to) {
-  for (llong i = 2; i <= to; i++) {
+void precompute_primefacs(ll to) {
+  for (ll i = 2; i <= to; i++) {
     if (!pfacs[i].empty()) continue;
     pfacs[i][i]++;
-    for (llong j = i+i; j <= to; j += i) {
-      llong x = j;
+    for (ll j = i+i; j <= to; j += i) {
+      ll x = j;
       while (x % i == 0) {
         pfacs[j][i]++;
         x /= i;
@@ -88,23 +94,78 @@ void precompute_primefacs(llong to) {
 }
 
 static bool sieve[pmax+1];
-void precompute_primes(llong to) {
+void precompute_primes(ll to) {
   sieve[0] = sieve[1] = true;
-  for (llong i = 2; i <= to; i++) {
+  for (ll i = 2; i <= to; i++) {
     if (sieve[i]) continue;
-    for (llong j = i*i; j <= to; j += i)
+    for (ll j = i*i; j <= to; j += i)
       sieve[j] = true;
   }
 }
 
-bool is_prime(llong x) {
-  for (llong i = 2; i*i <= x; ++i)
+bool is_prime(ll x) {
+  if (x <= 1) return false;
+  for (ll i = 2; i*i <= x; ++i)
     if (x % i == 0) return false;
   return true;
 }
 
-bool compute_pfacs_with_exp(llong x, map<int, int>& pfacs) {
-  for (llong i = 2; i*i <= x; ++i) {
+bool rabin(ll n) {
+    vector<int> p { 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+    for (int x: p) if (n == x) return 1;
+    if (n < p.back()) return 0;
+    ll s = 0, t = n - 1;
+    while (~t & 1)
+        t >>= 1, ++s;
+    for (int x: p) {
+        ll pt = powmod(x, t, n);
+        if (pt == 1) continue;
+        bool ok = 0;
+        for (int j = 0; j < s && !ok; ++j) {
+            if (pt == n - 1) ok = 1;
+            pt = multiply_mod(pt, pt, n);
+        }
+        if (!ok) return 0;
+    }
+    return 1;
+}
+
+ll pollard_rho(ll n) {
+    if (rabin(n)) return n;
+    int c = 2;
+    for(;;) {
+        ll x = rand() % n, y = (x * x + c) % n, d = 1;
+        int pow = 1, len = 1;
+        for (;;) {
+            if (len++ == pow) x = y, pow <<= 1, len = 0;
+            y = (multiply_mod(y, y, n) + c) % n;
+            if (x == y) break;
+            d = __gcd((x > y ? x - y : y - x), n);
+            if (d != 1) return d;
+        }
+        do c = rand(); while (c == 0);
+    }
+    return 0;
+}
+
+void factor(ll n, map<ll, int> &facts, int exp=1) {
+  if (n == 4) {
+    facts[2] += 2*exp;
+    return;
+  }
+    ll f = pollard_rho(n);
+    if (f == n) {
+      facts[n] += exp;
+      return;
+    }
+    int c = 0;
+    while (n % f == 0) c++, n /= f;
+    factor(n, facts, exp);
+    factor(f, facts, exp * c);
+}
+
+bool compute_pfacs_with_exp(ll x, map<int, int>& pfacs) {
+  for (ll i = 2; i*i <= x; ++i) {
     while (x % i == 0) {
       pfacs[i]++;
       x /= i;
@@ -115,9 +176,9 @@ bool compute_pfacs_with_exp(llong x, map<int, int>& pfacs) {
   return pfacs.empty();
 }
 
-int compute_pfacs(llong x, int pfacs[]) {
+int compute_pfacs(ll x, int pfacs[]) {
   int len = 0;
-  for (llong i = 2; i*i <= x; ++i) {
+  for (ll i = 2; i*i <= x; ++i) {
     if (x % i == 0) {
       pfacs[len++] = i;
       do { x /= i; } while (x % i == 0);
@@ -132,26 +193,26 @@ int compute_pfacs(llong x, int pfacs[]) {
 // that are not divisable by any of the given primes.
 // This essentially enumerates all the subsequences and adds or subtracts
 // their product, depending on the current parity value.
-llong count_coprime_rec(int primes[], int len, llong n, int i, llong prod, bool parity) {
+ll count_coprime_rec(int primes[], int len, ll n, int i, ll prod, bool parity) {
   if (i >= len || prod * primes[i] > n) return 0;
   return (parity ? 1 : (-1)) * (n / (prod*primes[i]))
         + count_coprime_rec(primes, len, n, i + 1, prod, parity)
         + count_coprime_rec(primes, len, n, i + 1, prod * primes[i], !parity);
 }
 // use cnt(B) - cnt(A-1) to get matching integers in range [A..B]
-llong count_coprime(int primes[], int len, llong n) {
+ll count_coprime(int primes[], int len, ll n) {
   if (n <= 1) return max(0LL, n);
   return n - count_coprime_rec(primes, len, n, 0, 1, true);
 }
 
 // solve x = b[i] (mod m[i])  0 <= i < n. m[i] must be comprime!
 // result will be mod p_0 * ... * p_{n-1}
-llong crt_coprime(llong as[], llong ps[], int len, llong& mod) {
-  static llong x[crt_maxlen];
+ll crt_coprime(ll as[], ll ps[], int len, ll& mod) {
+  static ll x[crt_maxlen];
   mod = 1;
   for (int i = 0; i < len; ++i) mod *= ps[i];
-  llong p = 1, y = 0;
-  llong res = x[0] = as[0];
+  ll p = 1, y = 0;
+  ll res = x[0] = as[0];
   for (int i = 1; i < len; ++i) {
     y = (y + x[i-1]*p) % mod;
     p *= ps[i-1];
@@ -163,8 +224,8 @@ llong crt_coprime(llong as[], llong ps[], int len, llong& mod) {
 }
 
 // find x.  a[i] x = b[i] (mod m[i])  0 <= i < n. m[i] need not be coprime
-bool crt_gen(int n, llong *a, llong *b, llong *m, llong &sol, llong &mod) {
-  llong A = 1, B = 0, ta, tm, tsol, tdis;
+bool crt_gen(int n, ll *a, ll *b, ll *m, ll &sol, ll &mod) {
+  ll A = 1, B = 0, ta, tm, tsol, tdis;
   for (int i = 0; i < n; ++i) {
     if (!linear_mod(a[i], b[i], m[i], tsol, tdis))
       return 0;
@@ -182,11 +243,11 @@ bool crt_gen(int n, llong *a, llong *b, llong *m, llong &sol, llong &mod) {
 // implementation based on
 // http://www.cse.sc.edu/~maxal/gpscripts/binomod.gp
 // (function factorialmodp1)
-llong partial_fac_mod_pq(llong n, llong p, llong q) {
+ll partial_fac_mod_pq(ll n, ll p, ll q) {
   if (n <= 1) return 1;
-  llong pq = 1;
+  ll pq = 1;
   for (int i = 0; i < q; ++i) pq *= p;
-  llong r = ((n/pq) % 2) ? -1 : 1;
+  ll r = ((n/pq) % 2) ? -1 : 1;
   for (int i = 2; i <= n % pq; ++i)
     if (i % p)
       r = (r * i) % pq;
@@ -198,7 +259,7 @@ llong partial_fac_mod_pq(llong n, llong p, llong q) {
 // http://www.dms.umontreal.ca/~andrew/Binomial/genlucas.html
 // Implementation based on
 // http://www.cse.sc.edu/~maxal/gpscripts/binomod.gp
-llong binomod(llong n, llong m, llong p, llong q) {
+ll binomod(ll n, ll m, ll p, ll q) {
   static int ndigs[binomod_maxdigs], mdigs[binomod_maxdigs],
              rdigs[binomod_maxdigs], N[binomod_maxdigs],
              M[binomod_maxdigs], R[binomod_maxdigs], e[binomod_maxdigs];
@@ -210,7 +271,7 @@ llong binomod(llong n, llong m, llong p, llong q) {
   memset(M, 0, sizeof R);
   memset(e, 0, sizeof e);
   int d = 0;
-  llong n1 = n, m1 = m, r1 = n-m;
+  ll n1 = n, m1 = m, r1 = n-m;
   while (n1) {
     ndigs[d] = n1 % p; mdigs[d] = m1 % p; rdigs[d] = r1 % p;
     n1 /= p; m1 /= p; r1 /= p;
@@ -222,13 +283,13 @@ llong binomod(llong n, llong m, llong p, llong q) {
     e[i] += e[i+1];
 
   if (e[0] >= q) return 0;
-  llong pq = 1;
+  ll pq = 1;
   for (int i = 0; i < q; ++i)
     pq *= p;
   q -= e[0];
 
   n1 = n; m1 = m; r1 = n-m;
-  llong pq1 = 1;
+  ll pq1 = 1;
   for (int i = 0; i < q; ++i) pq1 *= p;
   d = 0;
   while (n1) {
@@ -237,11 +298,11 @@ llong binomod(llong n, llong m, llong p, llong q) {
     ++d;
   }
 
-  llong res = ((p > 2 || q < 3) && q < d && e[q-1] % 2) ? -1 : 1;
+  ll res = ((p > 2 || q < 3) && q < d && e[q-1] % 2) ? -1 : 1;
   for (int i = 0; i < e[0]; i++)
     res = (res * p) % pq;
   for (int i = 0; i < d; i++) {
-    llong x = partial_fac_mod_pq(N[i], p, q) % pq;
+    ll x = partial_fac_mod_pq(N[i], p, q) % pq;
     x = (x * modinv(partial_fac_mod_pq(M[i], p, q), pq)) % pq;
     x = (x * modinv(partial_fac_mod_pq(R[i], p, q), pq)) % pq;
     res = (res * x) % pq;
@@ -259,8 +320,8 @@ int get_part_of_fac_n_mod_pe(int n, int p, int mod, int *upto, int &cnt) {
     return upto[n];
   } else {
     int res = powmod(upto[mod], n / mod, mod);
-    res = (llong) res * upto[n % mod] % mod;
-    res = (llong) res * get_part_of_fac_n_mod_pe(n / p, p, mod, upto, cnt)
+    res = (ll) res * upto[n % mod] % mod;
+    res = (ll) res * get_part_of_fac_n_mod_pe(n / p, p, mod, upto, cnt)
                                                        % mod;
     cnt += n / p;
     return res;
@@ -273,18 +334,18 @@ int binomod2(int n, int k, int p, int mod) {
   static int upto[maxm + 1];
   upto[0] = 1 % mod;
   for (int i = 1; i <= mod; ++i)
-    upto[i] = i % p ? (llong) upto[i - 1] * i % mod : upto[i - 1];
+    upto[i] = i % p ? (ll) upto[i - 1] * i % mod : upto[i - 1];
   int cnt1, cnt2, cnt3;
   int a = get_part_of_fac_n_mod_pe(n, p, mod, upto, cnt1);
   int b = get_part_of_fac_n_mod_pe(k, p, mod, upto, cnt2);
   int c = get_part_of_fac_n_mod_pe(n - k, p, mod, upto, cnt3);
-  int res = (llong) a * modinv(b, mod) % mod * modinv(c, mod) % mod
+  int res = (ll) a * modinv(b, mod) % mod * modinv(c, mod) % mod
                    * powmod(p, cnt1 - cnt2 - cnt3, mod) % mod;
   return res;
 }
 
 int binomod_gen(int n, int k, int m) {
-  static llong partp[crt_maxlen], partq[crt_maxlen], partmod[crt_maxlen];
+  static ll partp[crt_maxlen], partq[crt_maxlen], partmod[crt_maxlen];
   int partn = 0, tm = m;
   for (int i = 2; i * i <= tm; ++i)
     if (tm % i == 0) {
@@ -305,14 +366,14 @@ int binomod_gen(int n, int k, int m) {
     ++partn;
   }
 
-  llong coef[partn], res[partn];
+  ll coef[partn], res[partn];
   for (int i = 0; i < partn; ++i) {
     coef[i] = 1;
     // choose whichever is faster ;)
     res[i] = binomod2(n, k, partp[i], partmod[i]);
     //res[i] = binomod(n, k, partp[i], partq[i]);
   }
-  llong sol, mod;
+  ll sol, mod;
   crt_gen(partn, coef, res, partmod, sol, mod);
   return sol;
 }
@@ -326,7 +387,7 @@ int get_derangement_mod_m(int n, int m) {
   res[0] = d;
   for (int i = 1; i <= n && i < 2 * m; ++i) {
     p *= -1;
-    d = ((llong) i * d + p + m) % m;
+    d = ((ll) i * d + p + m) % m;
     res[i] = d;
     if (i == n)
       return d;

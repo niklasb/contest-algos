@@ -45,6 +45,3 @@ Node* remove(Node* n, int val) {
 	n->maintain();
 	return n;
 }
-
-int main() {
-}

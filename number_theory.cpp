@@ -9,12 +9,6 @@ const int maxm = 100010;
 // maximum number of digits of n in base p
 const int binomod_maxdigs = 100;
 
-ll gcd(ll a, ll b) {
-  ll t;
-  while (b) t = b, b = a % b, a = t;
-  return a;
-}
-
 ll extended_gcd(ll a, ll b, ll& lastx, ll& lasty) {
   ll x, y, q, tmp;
   x = 0; lastx = 1;
@@ -400,13 +394,4 @@ int* compute_phi(int n) {
     }
   }
   return phi;
-}
-
-int main() {
-  map<ll, int> facs;
-  ll x;
-  cin >> x;
-  factor(x, facs);
-  for (auto it: facs) cout << it.first << "^" << it.second << " ";
-  cout << endl;
 }

@@ -1,4 +1,4 @@
-const int n = 10;
+const int n = 10000; // ALL INDICES START AT 1 WITH THIS CODE!!
 
 // mode 1: update indices, read prefixes
 void update_idx(int tree[], int i, int val) { // v[i] += val
@@ -53,13 +53,4 @@ void update_range(int l, int r, ll val) { // v[l..r] += val
 }
 ll read_range(int l, int r) { // get sum v[l..r]
   return read_prefix(r) - read_prefix(l - 1);
-}
-
-#include <iostream>
-using namespace std;
-int tree[n+1];
-int main() {
-  update_prefix(tree, 3, 1);
-  update_prefix(tree, 5, 3);
-  for (int i = 1; i <= n; ++ i) cout << read_prefix(tree, i) << " ";cout<<endl;
 }

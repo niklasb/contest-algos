@@ -1,18 +1,18 @@
 ll multiply_mod(ll a, ll b, ll mod) {
   if (b == 0) return 0;
-  if (b & 1) return (multiply_mod(a, b-1, mod) + a) % mod;
-  return multiply_mod((a + a) % mod, b/2, mod);
+  if (b & 1) return ((ull)multiply_mod(a, b-1, mod) + a) % mod;
+  return multiply_mod(((ull)a + a) % mod, b/2, mod);
 }
 
 ll powmod(ll a, ll n, ll mod) {
   if (n == 0) return 1 % mod;
   if (n & 1) return multiply_mod(powmod(a, n-1, mod), a, mod);
-  return powmod(multiply_mod(a, a, mod), n/2);
+  return powmod(multiply_mod(a, a, mod), n/2, mod);
 }
 
 // simple modinv, returns 0 if inverse doesn't exist
 ll modinv(ll a, ll m) {
-  return a < 2 ? a : ((1 - m * 1ll * inv(m % a, a)) / a % m + m) % m;
+  return a < 2 ? a : ((1 - m * 1ll * modinv(m % a, a)) / a % m + m) % m;
 }
 ll modinv_prime(ll a, ll p) { return powmod(a, p-2, p); }
 
@@ -125,7 +125,7 @@ bool crt(int n, ll *a, ll *b, ll *m, ll &sol, ll &mod) {
 // where no number is at its original position (that is, P_i != i for all i)
 // also called subfactorial !n
 ll get_derangement_mod_m(ll n, ll m) {
-  vector<ll> res(maxm * 2);
+  vector<ll> res(m * 2);
   ll d = 1 % m, p = 1;
   res[0] = d;
   for (int i = 1; i <= min(n, 2 * m - 1); ++i) {
@@ -154,8 +154,8 @@ int* compute_phi(int n) {
 bool is_primitive(ll g, ll p) {
   map<ll, int> facs;
   factor(p - 1, facs);
-  for (auto& f : facs);
-    if (1 == powmod(g, (p-1)/f.first))
+  for (auto& f : facs)
+    if (1 == powmod(g, (p-1)/f.first, p))
       return 0;
   return 1;
 }
@@ -163,10 +163,10 @@ bool is_primitive(ll g, ll p) {
 ll dlog(ll g, ll b, ll p) { // find x such that g^x = b (mod p)
   ll m = (ll)(ceil(sqrt(p-1))+0.5); // better use binary search here...
   unordered_map<ll,ll> powers; // should compute this only once per g
-  rep(j,0,m) powers[powmod(g, j)] = j;
-  ll gm = powmod(g, -m + 2*(p-1));
+  rep(j,0,m) powers[powmod(g, j, p)] = j;
+  ll gm = powmod(g, -m + 2*(p-1), p);
   rep(i,0,m) {
-    if (contains(powers, b)) return i*m + powers[b];
+    if (powers.count(b)) return i*m + powers[b];
     b = b * gm % p;
   }
   assert(0); return -1;

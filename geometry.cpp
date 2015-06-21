@@ -1,4 +1,7 @@
-typedef long double D;
+using D=long double;
+using P=complex<D>;
+using L=vector<P>;
+using G=vector<P>;
 const D eps=1e-12, inf=1e15, pi=acos(-1), e=exp(1.);
 
 D sq(D x) { return x*x; }
@@ -9,7 +12,6 @@ int sgn(D x) { return (x > eps) - (x < -eps); }
 // when doing printf("%.Xf", x), fix '-0' output to '0'.
 D fixzero(D x, int d) { return (x>0 || x<=-5/pow(10,d+1)) ? x:0; }
 
-typedef complex<D> P;
 namespace std {
   bool operator<(const P& a, const P& b) {
     return mk(real(a), imag(a)) < mk(real(b), imag(b));
@@ -32,8 +34,6 @@ int ccw(P a, P b, P c) {
   return 0;
 }
 
-typedef vector<P> L;
-typedef vector<P> G;
 G dummy;
 L line(P a, P b) {
   L res; res.pb(a); res.pb(b); return res;
@@ -277,7 +277,8 @@ int intersectCC(const C& a, const C& b, G& res=dummy) {
   res = intersectCL2(a, p, ab);
   return res.size();
 }
-typedef valarray<D> P3;
+
+using P3 = valarray<D>;
 P3 p3(D x=0, D y=0, D z=0) {
   P3 res(3);
   res[0]=x;res[1]=y;res[2]=z;
@@ -304,7 +305,7 @@ P project_plane(const P3& v, P3 w, const P3& p) {
 
 template <typename T, int N> struct Matrix {
   T data[N][N];
-  Matrix<T,N>() { clr(data,0); }
+  Matrix<T,N>(T d=0) { rep(i,0,N) rep(j,0,N) data[i][j] = i==j?d:0; }
   Matrix<T,N> operator+(const Matrix<T,N>& other) const {
     Matrix res; rep(i,0,N) rep(j,0,N) res[i][j] = data[i][j] + other[i][j]; return res;
   }
@@ -314,22 +315,14 @@ template <typename T, int N> struct Matrix {
   Matrix<T,N> transpose() const {
     Matrix res; rep(i,0,N) rep(j,0,N) res[i][j] = data[j][i]; return res;
   }
-  void multiply_vector(const T v[N], T result[N]) {
-    rep(i,0,N) result[i] = 0;
-    rep(i,0,N) rep(j,0,N) result[i] += data[i][j] * v[j];
+  array<T,N> operator*(const array<T,N>& v) const {
+    array<T,N> res;
+    rep(i,0,N) rep(j,0,N) res[i] += data[i][j] * v[j];
+    return res;
   }
   const T* operator[](int i) const { return data[i]; }
   T* operator[](int i) { return data[i]; }
 };
-template <typename T, int N>
-static Matrix<T,N> id() { Matrix<T,N> m; rep(i,0,N) m[i][i] = 1; return m; }
-template <typename T>
-T pow(const T& x, ll e) {
-  if (!e) return id<T>();
-  if (e & 1) return x*pow(x,e-1);
-  T res = pow(x,e/2);
-  return res*res;
-}
 template <typename T, int N> ostream& operator<<(ostream& out, Matrix<T,N> mat) {
   rep(i,0,N) { rep(j,0,N) out << mat[i][j] << " "; cout << endl; } return out;
 } // creates a rotation matrix around axis x (must be normalized). Rotation is

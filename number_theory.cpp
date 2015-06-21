@@ -139,8 +139,8 @@ ll get_derangement_mod_m(ll n, ll m) {
 }
 
 // compute totient function for integers <= n
-int* compute_phi(int n) {
-  int *phi = new int[n + 1];
+vector<int> compute_phi(int n) {
+  vector<int> phi(n + 1, 0);
   for (int i = 1; i <= n; ++i) {
     phi[i] += i;
     for (int j = 2 * i; j <= n; j += i) {
@@ -177,11 +177,10 @@ ll dlog(ll g, ll b, ll p) { // find x such that g^x = b (mod p)
 ll count_partitions(int n, int k) {
   if (n==k) return 1;
   if (n<k || k==0) return 0;
-  ll *p = new ll[n+1];
+  vector<ll> p(n + 1);
   for (int i = 1; i <= n; ++i) p[i] = 1;
   for (int l = 2; l <= k; ++l)
     for (int m = l+1; m <= n-l+1; ++m)
       p[m] = p[m] + p[m-l];
-  delete[] p;
   return p[n-k+1];
 }

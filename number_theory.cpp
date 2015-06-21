@@ -111,57 +111,46 @@ bool is_prime(ll x) {
 }
 
 bool rabin(ll n) {
-    vector<int> p { 2, 3, 5, 7, 11, 13, 17, 19, 23 };
-    for (int x: p) if (n == x) return 1;
-    if (n < p.back()) return 0;
-    ll s = 0, t = n - 1;
-    while (~t & 1)
-        t >>= 1, ++s;
-    for (int x: p) {
-        ll pt = powmod(x, t, n);
-        if (pt == 1) continue;
-        bool ok = 0;
-        for (int j = 0; j < s && !ok; ++j) {
-            if (pt == n - 1) ok = 1;
-            pt = multiply_mod(pt, pt, n);
-        }
-        if (!ok) return 0;
+  // bases chosen to work for all n < 2^64, see https://oeis.org/A014233
+  set<int> p { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37 };
+  if (n <= 37) return p.count(n);
+  ll s = 0, t = n - 1;
+  while (~t & 1)
+    t >>= 1, ++s;
+  for (int x: p) {
+    ll pt = powmod(x, t, n);
+    if (pt == 1) continue;
+    bool ok = 0;
+    for (int j = 0; j < s && !ok; ++j) {
+      if (pt == n - 1) ok = 1;
+      pt = multiply_mod(pt, pt, n);
     }
-    return 1;
+    if (!ok) return 0;
+  }
+  return 1;
 }
 
-ll pollard_rho(ll n) {
-    if (rabin(n)) return n;
-    int c = 2;
-    for(;;) {
-        ll x = rand() % n, y = (x * x + c) % n, d = 1;
-        int pow = 1, len = 1;
-        for (;;) {
-            if (len++ == pow) x = y, pow <<= 1, len = 0;
-            y = (multiply_mod(y, y, n) + c) % n;
-            if (x == y) break;
-            d = __gcd((x > y ? x - y : y - x), n);
-            if (d != 1) return d;
-        }
-        do c = rand(); while (c == 0);
-    }
-    return 0;
+ll rho(ll n) {
+  if (~n & 1) return 2;
+  ll c = rand() % n, x = rand() % n, y = x, d = 1;
+  while (d == 1) {
+    x = (multiply_mod(x, x, n) + c) % n;
+    y = (multiply_mod(y, y, n) + c) % n;
+    y = (multiply_mod(y, y, n) + c) % n;
+    d = __gcd(abs(x - y), n);
+  }
+  return d == n ? rho(n) : d;
 }
 
-void factor(ll n, map<ll, int> &facts, int exp=1) {
-  if (n == 4) {
-    facts[2] += 2*exp;
+void factor(ll n, map<ll, int> &facts) {
+  if (n == 1) return;
+  if (rabin(n)) {
+    facts[n]++;
     return;
   }
-    ll f = pollard_rho(n);
-    if (f == n) {
-      facts[n] += exp;
-      return;
-    }
-    int c = 0;
-    while (n % f == 0) c++, n /= f;
-    factor(n, facts, exp);
-    factor(f, facts, exp * c);
+  ll f = rho(n);
+  factor(n/f, facts);
+  factor(f, facts);
 }
 
 bool compute_pfacs_with_exp(ll x, map<int, int>& pfacs) {
@@ -411,4 +400,13 @@ int* compute_phi(int n) {
     }
   }
   return phi;
+}
+
+int main() {
+  map<ll, int> facs;
+  ll x;
+  cin >> x;
+  factor(x, facs);
+  for (auto it: facs) cout << it.first << "^" << it.second << " ";
+  cout << endl;
 }

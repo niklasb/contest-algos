@@ -1,7 +1,3 @@
-#include <bits/stdc++.h>
-using namespace std;
-typedef long long ll;
-
 const ll is_query = -(1LL<<62);
 struct Line {
     ll m, b;
@@ -37,22 +33,3 @@ struct HullDynamic : public multiset<Line> { // will maintain upper hull for max
         return l.m * x + l.b;
     }
 };
-
-//int main() {
-    //HullDynamicOld h;
-    //HullDynamic h2;
-    //for (int top : { 100, 1000, 1000000000 }) {
-        //int T = 10000;
-        //while(T--) {
-            //ll m = rand() % top;
-            //ll b = rand() % top;
-            //h.insert(m,b);
-            //h2.insert_line(m,b);
-            //int Q =1000;
-            //while(Q--) {
-                //ll x = rand() % top;
-                //assert(h.eval(x) == h2.eval(x));
-            //}
-        //}
-    //}
-//}

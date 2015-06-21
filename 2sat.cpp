@@ -1,43 +1,3 @@
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <set>
-#include <stack>
-#include <queue>
-#include <deque>
-#include <map>
-#include <algorithm>
-#include <iomanip>
-#include <complex>
-#include <valarray>
-#include <cassert>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cmath>
-#include <climits>
-
-using namespace std;
-
-typedef long long ll;
-typedef pair<int, int> pii;
-typedef vector<int> vi;
-//#define foreach(v,c) for(typeof((c).begin()) v=(c).begin(); v!=(c).end();++v)
-#define foreach(v,c) for(vector<int>::iterator v=(c).begin(); v!=(c).end();++v)
-#define rep(i,s,e) for (int i=(s);i<(e);++i)
-#define pb push_back
-#define mk make_pair
-#define fst first
-#define snd second
-#define all(x) (x).begin(),(x).end()
-#define clr(x,y) memset(x,y,sizeof x)
-#define contains(x,y) (x).find(y)!=(x).end()
-#define endl "\n"
-
-int dx[]={0,0,1,-1,1,-1,1,-1}, dy[]={-1,1,0,0,1,-1,-1,1};
-const int mod = 1e9+7;
-
 const int maxn = 10010; // 2-sat: maxn = 2*maxvars
 vector<int> adj[maxn], radj[maxn];
 bool vis[maxn];
@@ -55,6 +15,7 @@ void dfs(int u, vector<int> adj[]) {
     bycol[col].pb(u);
   } else st.pb(u);
 }
+// this computes SCCs, outputs them in bycol, in topological order
 void kosaraju(int n) { // n = number of nodes
   st.clear();
   clr(vis,0);

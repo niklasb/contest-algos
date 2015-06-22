@@ -1,17 +1,17 @@
 const int maxn = 200010, maxlg = 18; // maxlg = ceil(log_2(maxn))
 struct SA {
-  pair<pii, int> L[maxn]; // O(n * log n) space
+  pair<pair<int,int>, int> L[maxn]; // O(n * log n) space
   int P[maxlg+1][maxn], n, stp, cnt, sa[maxn];
   SA(const string& s) : n(s.size()) { // O(n * log n)
     rep(i,0,n) P[0][i] = s[i];
     sa[0] = 0; // in case n == 1
     for (stp = 1, cnt = 1; cnt < n; stp++, cnt <<= 1) {
-      rep(i,0,n) L[i] = mk(mk(P[stp-1][i], i + cnt < n ? P[stp-1][i+cnt] : -1), i);
+      rep(i,0,n) L[i] = {{P[stp-1][i], i + cnt < n ? P[stp-1][i+cnt] : -1}, i};
       std::sort(L, L + n);
       rep(i,0,n)
-        P[stp][L[i].snd] = i>0 && L[i].fst == L[i-1].fst ?  P[stp][L[i-1].snd] : i;
+        P[stp][L[i].second] = i>0 && L[i].first == L[i-1].first ?  P[stp][L[i-1].second] : i;
     }
-    rep(i,0,n) sa[i] = L[i].snd;
+    rep(i,0,n) sa[i] = L[i].second;
   }
   int lcp(int x, int y) { // time log(n); x, y = indices into string, not SA
     int k, ret = 0;

@@ -16,19 +16,11 @@ ll modinv(ll a, ll m) {
 }
 ll modinv_prime(ll a, ll p) { return powmod(a, p-2, p); }
 
-ll extended_gcd(ll a, ll b, ll& lastx, ll& lasty) {
-  ll x, y, q, tmp;
-  x = 0; lastx = 1;
-  y = 1; lasty = 0;
-  while (b != 0) {
-    q = a / b;
-    tmp = b;
-    b = a % b;
-    a = tmp;
-    tmp = x; x = lastx - q*x; lastx = tmp;
-    tmp = y; y = lasty - q*y; lasty = tmp;
-  }
-  return a;
+tuple<ll,ll,ll> egcd(ll a, ll b) {
+  if (!a) return make_tuple(b, 0, 1);
+  ll g, y, x;
+  tie(g, y, x) = egcd(b % a, a);
+  return make_tuple(g, x - b/a * y, y);
 }
 
 // solve the linear equation a x == b (mod n)
@@ -38,7 +30,7 @@ ll extended_gcd(ll a, ll b, ll& lastx, ll& lasty) {
 ll linear_mod(ll a, ll b, ll n, ll &sol, ll &dis) {
   a = (a % n + n) % n, b = (b % n + n) % n;
   ll d, x, y;
-  d = extended_gcd(a, n, x, y);
+  tie(d, x, y) = egcd(a, n);
   if (b % d)
     return 0;
   x = (x % n + n) % n;

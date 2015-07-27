@@ -176,3 +176,18 @@ ll count_partitions(int n, int k) {
       p[m] = p[m] + p[m-l];
   return p[n-k+1];
 }
+
+// return cycle parameters (i, C) for sequence a^k (mod m)
+// such that a^(k + C) = a^k for all k >= i
+pair<ll,ll> pow_cycle(ll a, ll m) {
+  map<ll, int> facs;
+  factor(m, facs);
+  int i = 0; // i = smallest s.t. gcd(a^{i+1}, m) = gcd(a^i, m)
+  ll C = 1; // C = phi(r := m / gcd(a^i, m))
+  for (auto it: facs) {
+    i = max(i, it.second);
+    if (a % it.first) // r is product of prime powers in m coprime to a
+      C *= powmod(it.first, it.second - 1, m) * (it.first - 1);
+  }
+  return {i, C};
+}

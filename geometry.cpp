@@ -223,7 +223,7 @@ D distanceGP(const G& g, P p) {
     res = min(res, distanceSP(edge(g, i), p));
   return res;
 }
-P centroid(const G& v) {
+P centroid(const G& v) { // v must have no self-intersections
   D S = 0;
   P res;
   rep(i,0,v.size()) {

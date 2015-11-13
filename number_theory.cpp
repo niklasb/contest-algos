@@ -60,7 +60,7 @@ bool rabin(ll n) {
   return 1;
 }
 
-ll rho(ll n) {
+ll rho(ll n) { // will find a factor < n, but not necessarily prime
   if (~n & 1) return 2;
   ll c = rand() % n, x = rand() % n, y = x, d = 1;
   while (d == 1) {

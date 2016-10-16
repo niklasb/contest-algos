@@ -45,6 +45,6 @@ vertex* go(vertex* v, int c) {
 
 bool is_accepting(vertex *v) {
   if (v->is_acceping == -1)
-    v->is_accepting = v->leaf || is_accepting(get_link(v));
+    v->is_accepting = get_link(v) == v ? false : (v->leaf || is_accepting(get_link(v)));
   return v->is_accepting;
 }

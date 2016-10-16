@@ -1,3 +1,5 @@
+// This is O(n*d) where d is the maximum vertex degree. We can also use DP on
+// (x, from) instead in dfs1.
 void maintain(int x, int exclude) {
   g[x] = 1;
   for (int y: adj[x]) {

@@ -43,6 +43,8 @@ P dir(const L& l) { return l[1]-l[0]; }
 
 D project(P e, P x) { return dot(e,x) / norm(e); }
 P pedal(const L& l, P p) { return l[1] + dir(l) * project(dir(l), p-l[1]); }
+P reflect(P e, P x) { return P(2)*e*project(e, x) - x; } // reflect vector x along normal e
+P reflect(const L& l, P p) { return l[0] + reflect(dir(l), p-l[0]); }
 int intersectLL(const L &l, const L &m) {
   if (abs(cross(l[1]-l[0], m[1]-m[0])) > eps) return 1;  // non-parallel
   if (abs(cross(l[1]-l[0], m[0]-l[0])) < eps) return -1; // same line
@@ -61,9 +63,6 @@ bool intersectSS(const L& s, const L& t) {
 }
 bool intersectSP(const L& s, const P& p) {
   return abs(s[0]-p)+abs(s[1]-p)-abs(s[1]-s[0]) < eps; // triangle inequality
-}
-P reflection(const L& l, P p) {
-  return p + P(2,0) * (pedal(l, p) - p);
 }
 D distanceLP(const L& l, P p) {
   return abs(p - pedal(l, p));

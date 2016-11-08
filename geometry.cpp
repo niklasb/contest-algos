@@ -24,6 +24,7 @@ D dot(P a, P b)      { return real(conj(a) * b); }
 P scale(P a, D len)  { return a * (len/abs(a)); }
 P rotate(P p, D ang) { return p * polar(D(1), ang); }
 D angle(P a, P b)    { return arg(b) - arg(a); }
+D angle_unsigned(P a, P b) { return min(rem(arg(a)-arg(b),2*pi), rem(arg(b)-arg(a),2*pi)); }
 
 int ccw(P a, P b, P c) {
   b -= a; c -= a;

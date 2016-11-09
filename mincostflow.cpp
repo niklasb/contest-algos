@@ -1,4 +1,4 @@
-const int MAXN = 500, MAXC = 1<<29;
+const int MAXN = 10000, MAXC = 1<<29;
 struct edge { int dest, cap, cost, rev; };
 vector<edge> adj[MAXN];
 int dis[MAXN], source, target, iter, cap, cost;

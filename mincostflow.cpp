@@ -27,7 +27,7 @@ bool spfa() { // optimization: use dijkstra here and do Johnson reweighting befo
     }
   }
   edge* e = pre[target];
-  if (!e) return 0;  // min-cost only: return also if dis[target] >= 0
+  if (!e) return 0;  // to minimize (cost, -flow): return also if dis[target] > 0
   while (e) {
     edge& rev = adj[e->dest][e->rev];
     e->cap -= cap;

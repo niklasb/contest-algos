@@ -1,9 +1,7 @@
 const int maxn = 10010; // 2-sat: maxn = 2*maxvars
-vector<int> adj[maxn], radj[maxn];
 bool vis[maxn];
 int col, color[maxn];
-vector<int> bycol[maxn];
-vector<int> st;
+vector<int> adj[maxn], radj[maxn], bycol[maxn+1], st;
 
 void init() { rep(i,0,maxn) adj[i].clear(), radj[i].clear(); }
 void dfs(int u, vector<int> adj[]) {
